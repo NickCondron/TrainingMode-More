@@ -1,6 +1,6 @@
 .PHONY: clean iso all release
 
-dats = build/ledgedash.dat build/wavedash.dat build/lcancel.dat build/labCSS.dat build/eventMenu.dat build/lab.dat build/powershield.dat
+dats = build/ledgedash.dat build/wavedash.dat build/lcancel.dat build/labCSS.dat build/eventMenu.dat build/lab.dat build/powershield.dat build/slalom.dat
 
 # find all .asm and .s files in the ASM dir. We have the escape the spaces, so we pipe to sed
 ASM_FILES := $(shell find ASM -type f \( -name '*.asm' -o -name '*.s' \) | sed 's/ /\\ /g')
@@ -55,6 +55,10 @@ build/wavedash.dat: src/wavedash.c src/wavedash.h src/events.h
 build/powershield.dat: src/powershield.c src/events.h
 	$(MEX_BUILD) -i "src/powershield.c" -s "evFunction" -dat "build/powershield.dat" -t "MexTK/evFunction.txt"
 
+build/slalom.dat: src/slalom.c src/slalom.h src/events.h
+	cp "dats/slalom.dat" "build/slalom.dat"
+	$(MEX_BUILD) -i "src/slalom.c" -s "evFunction" -dat "build/slalom.dat" -t "MexTK/evFunction.txt"
+
 build/codes.gct: Additional\ ISO\ Files/opening.bnr $(ASM_FILES)
 	cd "Build TM Codeset" && ./gecko build
 	cp Additional\ ISO\ Files/* build/
@@ -76,6 +80,7 @@ TM-CE.iso: build/Start.dol build/codes.gct $(dats)
 		insert TM/ledgedash.dat build/ledgedash.dat \
 		insert TM/wavedash.dat build/wavedash.dat \
 		insert TM/powershield.dat build/powershield.dat \
+		insert TM/slalom.dat build/slalom.dat \
 		insert codes.gct build/codes.gct \
 		insert Start.dol build/Start.dol \
 		insert opening.bnr build/opening.bnr
