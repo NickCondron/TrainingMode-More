@@ -149,6 +149,41 @@ EventDesc Wavedash = {
     .matchData = &Wavedash_MatchData,
 };
 
+static EventMatchData Sweetspot_MatchData = {
+    .timer = MATCH_TIMER_HIDE,
+    .matchType = MATCH_MATCHTYPE_TIME,
+    .hideGo = true,
+    .hideReady = true,
+    .isCreateHUD = false,
+    .timerRunOnPause = false,
+    .isCheckForZRetry = true,
+    .isShowScore = false,
+
+    .isRunStockLogic = false,
+    .isDisableHit = false,
+    .useKOCounter = false,
+    .timerSeconds = 0,
+};
+EventDesc Sweetspot = {
+    .eventName = "Sweetspot Training\n",
+    .eventDescription = "Sweetspot the ledge to recover",
+    .eventFile = "sweetspot",
+    .jumpTableIndex = -1,
+    .CSSType = SLCHRKIND_EVENT,
+    .allowed_characters = {
+        .hmn = CSSID_FALCO | CSSID_FOX, // TODO allow more charcters
+        .cpu = -1,
+    },
+    .playerKind = -1,
+    .cpuKind = CKIND_MARTH,
+    .stage = -1,
+    .disable_hazards = true,
+    .force_sopo = false,
+    .scoreType = SCORETYPE_KO,
+    .callbackPriority = 3,
+    .matchData = &Sweetspot_MatchData,
+};
+
 // Combo Training
 EventDesc Combo = {
 
@@ -545,6 +580,7 @@ static EventDesc *General_Events[] = {
     &LCancel,
     &Ledgedash,
     &Wavedash,
+    &Sweetspot,
     &Combo,
     &AttackOnShield,
     &Reversal,
