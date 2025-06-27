@@ -7,7 +7,6 @@
 #define TM_DEBUG 0 // 0 = release (no logging), 1 = OSReport logs, 2 = onscreen logs
 #define EVENT_DATASIZE 512
 #define TM_FUNC -(50 * 4)
-#define countof(A) (sizeof(A)/sizeof(*(A)))
 
 #define ANALOG_TRIGGER_THRESHOLD 43
 
