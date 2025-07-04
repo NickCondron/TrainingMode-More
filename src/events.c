@@ -886,7 +886,11 @@ void OnSceneChange(void)
     // Hook exists at 801a4c94
     TM_CreateWatermark();
 
-#if TM_DEBUG == 2
+#if TM_DEBUG == 1   // Create and hide console
+    TM_CreateConsole();
+    stc_event_vars.db_console_text->show_text ^= 1;
+    stc_event_vars.db_console_text->show_background ^= 1;
+#elif TM_DEBUG == 2 // Create and show console
     TM_CreateConsole();
 #endif
 };
@@ -1664,7 +1668,7 @@ int BoneToID(FighterData *fighter_data, JOBJ *bone)
 
     // no bone found
     if (bone_id == -1)
-        OSReport("no bone found %x\n", bone);
+        TMLOG("no bone found %x\n", bone);
 
     return bone_id;
 }
