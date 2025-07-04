@@ -300,7 +300,7 @@ void LCancel_Think(LCancelData *event_data, FighterData *hmn_data)
 
         // get this frames position
         float time = 1 - ((float)event_data->hud.arrow_timer / (float)LCLARROW_ANIMFRAMES);
-        float xpos = Bezier(time, event_data->hud.arrow_prevpos, event_data->hud.arrow_nextpos);
+        float xpos = smooth_lerp(time, event_data->hud.arrow_prevpos, event_data->hud.arrow_nextpos);
 
         // update position
         JOBJ *arrow_jobj;
@@ -770,13 +770,6 @@ static void *item_callbacks[] = {
     0x80288c68,
     0x803f5988,
 };
-
-// Misc
-float Bezier(float time, float start, float end)
-{
-    float bez = time * time * (3.0f - 2.0f * time);
-    return bez * (end - start) + start;
-}
 
 // Initial Menu
 EventMenu *Event_Menu = &LabMenu_Main;

@@ -381,7 +381,6 @@ void Message_Manager(GOBJ *mngr_gobj);
 void Message_Destroy(GOBJ **msg_queue, int msg_num);
 void Message_Add(GOBJ *msg_gobj, int queue_num);
 void Message_CObjThink(GOBJ *gobj);
-float BezierBlend(float t);
 
 #define MSGQUEUE_NUM 7
 #define MSGQUEUE_SIZE 8

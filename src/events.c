@@ -2094,9 +2094,8 @@ void Message_Manager(GOBJ *mngr_gobj)
                         this_msg_pos.X = final_x;
                         this_msg_pos.Y = final_y;
                     } else {
-                        float blend = BezierBlend(t);
-                        this_msg_pos.X = blend * (final_x - initial_x) + initial_x;
-                        this_msg_pos.Y = blend * (final_y - initial_y) + initial_y;
+                        this_msg_pos.X = smooth_lerp(t, initial_x, final_x);
+                        this_msg_pos.Y = smooth_lerp(t, initial_y, final_y);
                     }
 
                     Vec3 scale = this_msg_jobj->scale;
@@ -2124,7 +2123,7 @@ void Message_Manager(GOBJ *mngr_gobj)
                     Vec3 *pos = &this_msg_jobj->trans;
 
                     // BG scale
-                    scale->Y = BezierBlend(t);
+                    scale->Y = smooth_lerp(t,  0.0, 1.0);
                     // text scale
                     this_msg_text->viewport_scale.Y = (scale->Y * 0.01) * MSGTEXT_BASESCALE;
                     // text position
@@ -2244,11 +2243,6 @@ void Message_CObjThink(GOBJ *gobj)
 {
     if (Pause_CheckStatus(1) != 2)
         CObjThink_Common(gobj);
-}
-
-float BezierBlend(float t)
-{
-    return t * t * (3.0f - 2.0f * t);
 }
 
 // Tips Functions

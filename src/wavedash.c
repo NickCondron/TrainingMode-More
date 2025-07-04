@@ -419,7 +419,7 @@ void Wavedash_Think(WavedashData *event_data, FighterData *hmn_data)
 
         // get this frames position
         float time = 1 - ((float)event_data->hud.arrow_timer / (float)WDARROW_ANIMFRAMES);
-        float xpos = Bezier(time, event_data->hud.arrow_prevpos, event_data->hud.arrow_nextpos);
+        float xpos = smooth_lerp(time, event_data->hud.arrow_prevpos, event_data->hud.arrow_nextpos);
 
         // update position
         JOBJ *arrow_jobj;
@@ -433,11 +433,6 @@ void Wavedash_HUDCamThink(GOBJ *gobj)
     // if HUD enabled and not paused
     if (!WdOptions_Main[OPT_HUD].val && Pause_CheckStatus(1) != 2)
         CObjThink_Common(gobj);
-}
-float Bezier(float time, float start, float end)
-{
-    float bez = time * time * (3.0f - 2.0f * time);
-    return bez * (end - start) + start;
 }
 
 // Target functions

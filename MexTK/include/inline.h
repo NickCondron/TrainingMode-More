@@ -568,6 +568,11 @@ static inline float fclamp(float n, float min, float max) {
     return fmin(max, fmax(min, n));
 }
 
+static inline float smooth_lerp(float time, float start, float end) {
+    float delta = time * time * (3.0f - 2.0f * time);
+    return delta * (end - start) + start;
+}
+
 /*---------------------------------------------*
  * GXVertex functions                          *
  *---------------------------------------------*/
