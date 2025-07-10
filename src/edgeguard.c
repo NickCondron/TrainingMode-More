@@ -6,9 +6,6 @@
 // how many frames it takes to reset after the cpu dies or successfully recovers
 #define RESET_DELAY 30
 
-#define DEGREES_TO_RADIANS 0.01745329252f
-#define PI 3.141592654f
-
 static int reset_timer = -1;
 static Vec2 ledge_positions[2];
 static EdgeguardInfo *info;
@@ -26,7 +23,7 @@ static void UpdatePosition(GOBJ *fighter) {
     data->coll_data.topN_CurrCorrect = pos;
     data->coll_data.topN_Prev = pos;
     data->coll_data.topN_Proj = pos;
-    data->coll_data.coll_test = stc_colltest;
+    data->coll_data.coll_test = *stc_colltest;
 }
 
 static void GetLedgePositions(Vec2 coords_out[2]) {
@@ -167,7 +164,7 @@ static bool IsGroundActionable(GOBJ *fighter) {
 
     int state = data->state_id;
 
-    if (InHitstunAnim(data) && HitstunEnded(fighter))
+    if (InHitstunAnim(state) && HitstunEnded(fighter))
         return true;
 
     if (state == ASID_LANDING && data->state.frame >= data->attr.normal_landing_lag)
@@ -280,7 +277,7 @@ static void Reset_CPU(GOBJ *cpu, int side_idx, int dmg, float kb_mag, float kb_a
     UpdateCameraBox(cpu);
     
     // give cpu knockback
-    float angle_rad = kb_angle * DEGREES_TO_RADIANS;
+    float angle_rad = kb_angle * M_1DEGREE;
 
     float vel = kb_mag * (*stc_ftcommon)->force_applied_to_kb_mag_multiplier;
     float vel_x = cos(angle_rad) * vel * (float)side;
@@ -291,7 +288,7 @@ static void Reset_CPU(GOBJ *cpu, int side_idx, int dmg, float kb_mag, float kb_a
     float kb_frames = (float)(int)((*stc_ftcommon)->x154 * kb_mag);
     *(float*)&cpu_data->state_var.state_var1 = kb_frames;
     cpu_data->flags.hitstun = 1;
-    Fighter_EnableCollUpdate(cpu);
+    Fighter_EnableCollUpdate(cpu_data);
 
     // give hitlag
     cpu_data->dmg.hitlag_frames = 7;
@@ -415,7 +412,7 @@ void Event_Init(GOBJ *gobj) {
         assert("unimplemented character in edgeguard training");
     Options_Main[OPT_MAIN_RECOVERY].menu = info->recovery_menu;
     
-    GetLedgePositions(&ledge_positions);
+    GetLedgePositions(ledge_positions);
 }
 
 void Event_Think(GOBJ *menu) {
@@ -1263,7 +1260,7 @@ static void Think_Marth(void) {
                     curl /= 2.f;
             }
             
-            float ang = curl * PI / 2.f;
+            float ang = curl * M_PI / 2.f;
             cpu_data->cpu.lstickX = (127.f * sin(ang)) * dir;
             cpu_data->cpu.lstickY = 127.f * cos(ang);
         }
