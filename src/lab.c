@@ -185,7 +185,7 @@ void Lab_CustomOSDsThink(void) {
             int found = GetCurrentStateName(hmn, state_buf);
             if (!found) strcpy(state_buf, "Unknown");
 
-            ((*event_vars_ptr)->Message_Display)(
+            event_vars->Message_Display(
                 15, hmn_data->ply, 0, 
                 "%s:\n%i Frames", state_buf, hmn_data->TM.state_frame
             );
@@ -6116,9 +6116,6 @@ void Event_Init(GOBJ *gobj)
     // Directly overwriting the asm is the best call for now imo.
     // This needs to be done here in init, as dolphin will jit the function when it runs and overwriting won't do anything.
     *(u32*)(0x801d463c) = 0x806d3778;
-
-    // theres got to be a better way to do this...
-    event_vars = *event_vars_ptr;
 
     event_vars->persistent_data = &persistent_data;
     event_vars->savestate_saved_while_mirrored = false;

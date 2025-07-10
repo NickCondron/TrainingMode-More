@@ -180,9 +180,6 @@ void Event_Init(GOBJ *gobj)
 {
     LedgedashData *event_data = gobj->userdata;
 
-    // theres got to be a better way to do this...
-    event_vars = *event_vars_ptr;
-
     // get assets
     event_data->assets = Archive_GetPublicAddress(event_vars->event_archive, "ledgedash");
 

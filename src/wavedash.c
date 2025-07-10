@@ -67,9 +67,6 @@ void Event_Init(GOBJ *gobj)
     GOBJ *hmn = Fighter_GetGObj(0);
     FighterData *hmn_data = hmn->userdata;
 
-    // theres got to be a better way to do this...
-    event_vars = *event_vars_ptr;
-
     // get wavedash assets
     event_data->assets = Archive_GetPublicAddress(event_vars->event_archive, "wavedash");
 

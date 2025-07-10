@@ -5,8 +5,6 @@ static char nullString[] = " ";
 
 GOBJ *EventMenu_Init(EventMenu *start_menu)
 {
-    event_vars = *event_vars_ptr;
-
     // Ensure this event has a menu
     if (start_menu == 0)
         return 0;

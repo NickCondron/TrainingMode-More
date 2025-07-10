@@ -586,7 +586,7 @@ static EventPage *EventPages[] = {
 /// Static Variables ///
 ////////////////////////
 
-static EventVars stc_event_vars = {
+EventVars stc_event_vars = {
     .event_desc = 0,
     .menu_assets = 0,
     .event_gobj = 0,
@@ -601,8 +601,54 @@ static EventVars stc_event_vars = {
     .Tip_Destroy = Tip_Destroy,
     .savestate = 0,
 };
+
+static GOBJ *stc_msgmgr;
 static Savestate_v1 *stc_savestate;
 static TipMgr stc_tipmgr;
+
+static Vec2 stc_msg_queue_offsets_vertical[] = {
+    {0, 5.15f},
+    {0, 5.15f},
+    {0, 5.15f},
+    {0, 5.15f},
+    {0, 5.15f},
+    {0, 5.15f},
+    {0, -5.15f}
+};
+static Vec3 stc_msg_queue_pos_sides[] = {
+    {-22.f, -13.f, 0},
+    {-7.f, -13.f, 0},
+    {7.f, -13.f, 0},
+    {22.f, -13.f, 0},
+    {0, 0, 0},
+    {0, 0, 0},
+    {0, -5.15f}
+};
+
+static Vec2 stc_msg_queue_offsets_horizontal[] = {
+    {12.5f, 0},
+    {12.5f, 0},
+    {12.5f, 0},
+    {12.5f, 0},
+    {12.5f, 0},
+    {12.5f, 0},
+    {-12.5f, 0},
+};
+static Vec3 stc_msg_queue_pos_top[] = {
+    {-22.f, 20.f, 0},
+    {-22.f, 14.f, 0},
+    {-22.f, 8.f, 0},
+    {-22.f, 2.f, 0},
+    {0, 0, 0},
+    {0, 0, 0},
+    {22.f, 20.f, 0}
+};
+static GXColor stc_msg_colors[] = {
+    {255, 255, 255, 255},
+    {141, 255, 110, 255},
+    {255, 162, 186, 255},
+    {255, 240, 0, 255},
+};
 
 ///////////////////////
 /// Event Functions ///
@@ -848,8 +894,7 @@ void OnFileLoad(HSD_Archive *archive) // this function is run right after TmDt i
     stc_event_vars.menu_assets = Archive_GetPublicAddress(archive, "eventMenu");
 
     // store pointer to static variables
-    *event_vars_ptr = &stc_event_vars;
-    event_vars = *event_vars_ptr;
+    *event_vars_ptr_loc = &stc_event_vars;
 }
 
 void OnSceneChange(void)

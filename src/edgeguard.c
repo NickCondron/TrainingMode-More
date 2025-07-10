@@ -396,8 +396,6 @@ static void ChangeCustomKB_DmgMax(GOBJ *menu_gobj, int value) {
 }
 
 void Event_Init(GOBJ *gobj) {
-    event_vars = *event_vars_ptr;
-    
     GOBJ *hmn = Fighter_GetGObj(0);
     GOBJ *cpu = Fighter_GetGObj(1);
     FighterData *hmn_data = hmn->userdata;

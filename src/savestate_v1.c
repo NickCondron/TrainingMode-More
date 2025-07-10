@@ -1,4 +1,4 @@
-#include "savestate.h"
+#include "events.h"
 
 // use enum savestate_flags for flags
 int Savestate_Save_v1(Savestate_v1 *savestate, int flags)
@@ -44,10 +44,10 @@ int Savestate_Save_v1(Savestate_v1 *savestate, int flags)
         savestate->is_exist = 1;
 
         // save frame
-        savestate->frame = stc_event_vars.game_timer;
+        savestate->frame = event_vars->game_timer;
 
         // save event data
-        memcpy(&savestate->event_data, stc_event_vars.event_gobj->userdata, sizeof(savestate->event_data));
+        memcpy(&savestate->event_data, event_vars->event_gobj->userdata, sizeof(savestate->event_data));
 
         // backup all players
         for (int i = 0; i < 6; i++)
@@ -73,7 +73,7 @@ int Savestate_Save_v1(Savestate_v1 *savestate, int flags)
             if (queue[0].fighter != 0)
             {
 
-                FtSaveState *ft_state = &savestate->ft_state[i];
+                FtSaveState_v1 *ft_state = &savestate->ft_state[i];
 
                 isSaved = 1;
 
@@ -92,7 +92,7 @@ int Savestate_Save_v1(Savestate_v1 *savestate, int flags)
                     if (queue[j].fighter != 0)
                     {
 
-                        FtSaveStateData *ft_data = &ft_state->data[j];
+                        FtSaveStateData_v1 *ft_data = &ft_state->data[j];
                         FighterData *fighter_data = queue[j].fighter_data;
 
                         // backup to ft_state
@@ -199,7 +199,7 @@ int Savestate_Save_v1(Savestate_v1 *savestate, int flags)
     return isSaved;
 }
 // use enum savestate_flags for flags
-int Savestate_Load_v1(Savestate *savestate, int flags)
+int Savestate_Load_v1(Savestate_v1 *savestate, int flags)
 {
     typedef struct BackupQueue
     {
@@ -232,7 +232,7 @@ int Savestate_Load_v1(Savestate *savestate, int flags)
         if ((queue[0].fighter != 0) && (savestate->ft_state[i].data[0].is_exist == 1))
         {
 
-            FtSaveState *ft_state = &savestate->ft_state[i];
+            FtSaveState_v1 *ft_state = &savestate->ft_state[i];
 
             isLoaded = 1;
 
@@ -259,7 +259,7 @@ int Savestate_Load_v1(Savestate *savestate, int flags)
                 {
 
                     // get state
-                    FtSaveStateData *ft_data = &ft_state->data[j];
+                    FtSaveStateData_v1 *ft_data = &ft_state->data[j];
                     FighterData *fighter_data = queue[j].fighter_data;
 
                     // sleep
@@ -547,7 +547,7 @@ int Savestate_Load_v1(Savestate *savestate, int flags)
             // out the queue on reset so the subcharacter starts with a blank cpu log, which is what you want in most situations. 
             if (queue[1].fighter != 0 && savestate->ft_state[i].data[1].is_exist == 1){
 
-                FtSaveStateData *primarychar_data = &ft_state->data[0];
+                FtSaveStateData_v1 *primarychar_data = &ft_state->data[0];
                 FighterData *subchar_fighter_data = queue[1].fighter_data;
 
                 for (int j = 0; j < countof(subchar_fighter_data->cpu.leader_log); j++) 
@@ -592,7 +592,7 @@ int Savestate_Load_v1(Savestate *savestate, int flags)
         // restore frame
         Match *match = stc_match;
         match->time_frames = savestate->frame;
-        stc_event_vars.game_timer = savestate->frame;
+        event_vars->game_timer = savestate->frame;
 
         // update timer
         int frames = match->time_frames - 1; // this is because the scenethink function runs once before the gobj procs do
@@ -600,7 +600,7 @@ int Savestate_Load_v1(Savestate *savestate, int flags)
         match->time_ms = frames % 60;
 
         // restore event data
-        memcpy(stc_event_vars.event_gobj->userdata, &savestate->event_data, sizeof(savestate->event_data));
+        memcpy(event_vars->event_gobj->userdata, &savestate->event_data, sizeof(savestate->event_data));
 
         // remove all particles
         for (int i = 0; i < PTCL_LINKMAX; i++)

@@ -22,8 +22,6 @@ int GetSelectedFighterIdOnCssForHmn();
 // OnLoad
 void OnCSSLoad(HSD_Archive *archive)
 {
-    event_vars = *event_vars_ptr;
-
     // get assets from this file
     stc_import_assets = Archive_GetPublicAddress(archive, "labCSS");
 

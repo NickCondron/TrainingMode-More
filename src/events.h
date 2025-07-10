@@ -1,3 +1,6 @@
+#ifndef EVENTS_H
+#define EVENTS_H
+
 #include "../MexTK/mex.h"
 #include "menu.h"
 #include "savestate.h"
@@ -151,6 +154,8 @@ typedef struct EventVars
     HSD_Archive *event_archive; // event archive header
     DevText *db_console_text;
 } EventVars;
+#define event_vars_ptr_loc ((EventVars**)0x803d7054)
+#define event_vars (*event_vars_ptr_loc)
 
 // Function prototypes
 EventDesc *GetEventDesc(int page, int event);
@@ -167,9 +172,6 @@ void EventUpdate(void);
 void Event_IncTimer(GOBJ *gobj);
 void Test_Think(GOBJ *gobj);
 void Hazards_Disable(void);
-
-static EventVars **event_vars_ptr = 0x803d7054;
-static EventVars *event_vars;
 
 // GX Link args
 #define GXLINK_MENUMODEL 12
@@ -222,45 +224,6 @@ typedef struct MsgMngrData
     int canvas;
     GOBJ *msg_queue[MSGQUEUE_NUM][MSGQUEUE_SIZE]; // array 7 is for miscellaneous messages, not related to a player
 } MsgMngrData;
-static GOBJ *stc_msgmgr;
-
-static Vec2 stc_msg_queue_offsets_vertical[] = {
-    {0, 5.15f},
-    {0, 5.15f},
-    {0, 5.15f},
-    {0, 5.15f},
-    {0, 5.15f},
-    {0, 5.15f},
-    {0, -5.15f}
-};
-static Vec3 stc_msg_queue_pos_sides[] = {
-    {-22.f, -13.f, 0},
-    {-7.f, -13.f, 0},
-    {7.f, -13.f, 0},
-    {22.f, -13.f, 0},
-    {0, 0, 0},
-    {0, 0, 0},
-    {0, -5.15f}
-};
-
-static Vec2 stc_msg_queue_offsets_horizontal[] = {
-    {12.5f, 0},
-    {12.5f, 0},
-    {12.5f, 0},
-    {12.5f, 0},
-    {12.5f, 0},
-    {12.5f, 0},
-    {-12.5f, 0},
-};
-static Vec3 stc_msg_queue_pos_top[] = {
-    {-22.f, 20.f, 0},
-    {-22.f, 14.f, 0},
-    {-22.f, 8.f, 0},
-    {-22.f, 2.f, 0},
-    {0, 0, 0},
-    {0, 0, 0},
-    {22.f, 20.f, 0}
-};
 
 enum MsgColors
 {
@@ -268,12 +231,6 @@ enum MsgColors
     MSGCOLOR_GREEN,
     MSGCOLOR_RED,
     MSGCOLOR_YELLOW
-};
-static GXColor stc_msg_colors[] = {
-    {255, 255, 255, 255},
-    {141, 255, 110, 255},
-    {255, 162, 186, 255},
-    {255, 240, 0, 255},
 };
 
 #define MSGTIMER_SHIFT 6
@@ -312,3 +269,5 @@ void Tip_Destroy(void); // 0 = immediately destroy, 1 = force exit
 void Tip_Think(GOBJ *gobj);
 
 #define TIP_TXTJOINT 2
+
+#endif
