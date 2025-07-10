@@ -301,7 +301,7 @@ static void Reset_CPU(GOBJ *cpu, int side_idx, int dmg, float kb_mag, float kb_a
 }
 
 static void Reset(void) {
-    event_vars->Savestate_Load(event_vars->savestate, Savestate_Silent);
+    event_vars->Savestate_Load_v1(event_vars->savestate, Savestate_Silent);
 
     for (int ply = 0; ply < 2; ++ply) {
         MatchHUDElement *hud = &stc_matchhud->element_data[ply];
@@ -419,7 +419,7 @@ void Event_Think(GOBJ *menu) {
     // For some reason, Savestate_Save crashes in Event_Init.
     // So we need to init on first think frame.
     if (event_vars->game_timer == 1) {
-        event_vars->Savestate_Save(event_vars->savestate, Savestate_Silent);
+        event_vars->Savestate_Save_v1(event_vars->savestate, Savestate_Silent);
         Reset();
     }
     

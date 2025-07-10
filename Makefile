@@ -46,7 +46,7 @@ clean:
 
 build/eventMenu.dat: src/events.c src/events.h src/menu.c src/menu.h
 	cp "dats/eventMenu.dat" "build/eventMenu.dat" 
-	$(MEX_BUILD) -i "src/events.c" "src/menu.c" -s "tmFunction" -dat "build/eventMenu.dat" -t "MexTK/tmFunction.txt"
+	$(MEX_BUILD) -i "src/events.c" "src/menu.c" "src/savestate_v1.c" -s "tmFunction" -dat "build/eventMenu.dat" -t "MexTK/tmFunction.txt"
 
 build/lab.dat: src/lab.c src/lab.h src/lab_common.h src/events.h
 	cp "dats/lab.dat" "build/lab.dat"

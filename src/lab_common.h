@@ -299,7 +299,7 @@ typedef struct RecData
 typedef struct RecordingSave
 {
     MatchInit match_data; // this will point to a struct containing match info
-    Savestate savestate;
+    Savestate_v1 savestate;
     RecInputData hmn_inputs[REC_SLOTS];
     RecInputData cpu_inputs[REC_SLOTS];
 } RecordingSave;
@@ -471,10 +471,8 @@ void Record_Think(GOBJ *rec_gobj);
 void Record_Update(int ply, RecInputData *inputs, RecInputData *rerecord_inputs, int rec_mode);
 void Record_SetInputs(GOBJ *fighter, RecInputs *inputs, bool mirror);
 int Record_RearrangeButtons(RecInputs *inputs);
-void Record_LoadSavestate(Savestate *savestate);
+void Record_LoadSavestate(Savestate_v1 *savestate);
 int Record_MenuThink(GOBJ *menu_gobj);
-int Record_OptimizedSave(Savestate *savestate);
-int Record_OptimizedLoad(Savestate *savestate);
 int Record_GetRandomSlot(RecInputData **input_data, EventOption slot_menu[]);
 int Record_GOBJToID(GOBJ *gobj);
 int Record_FtDataToID(FighterData *fighter_data);
