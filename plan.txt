@@ -1,0 +1,115 @@
+planned:
+    - perfect recreation of start state through a set duration
+
+not planned:
+    - seeking to arbitrary frame (would need to savestate every frame - too much mem)
+
+PER FRAME STUFF
+    - rng seed (TODO test how)
+    - stage state (TODO find where and what)
+    - 
+
+FORMAT #################################################################
+
+header:
+    u16 version_major
+    u8 version_minor
+    u8 version_patch
+    
+    u16 rec_count
+    
+    meta *meta
+    state *state
+    rec *rec
+    
+META ------------------------------------------------------------------
+
+meta:
+    // info ---------------------
+    char filename[32]
+    
+    u8 char_hmn
+    u8 costume_hmn
+    u8 char_cpu
+    u8 costume_cpu
+    u8 stage_ext
+    u8 stage_int
+    
+    u16 year
+    u8 month
+    u8 day
+    u8 hour
+    u8 min
+    u8 second
+    
+    u8 rec_idx_hmn
+    u8 rec_idx_cpu
+    rec_info *info // counted by rec_count
+    
+rec_info:
+    u16 chance
+    
+SAVESTATE ------------------------------------------------------------------
+
+savestate:
+    u32 write_count
+    data_write *writes
+    u32 ptrlink_count
+    ptrlink *ptrlinks
+
+target:
+    run_target_type type
+    u24 target_type_param
+
+data_write:
+    target target
+    u16 data_len
+    u16 target_offset
+    u8 *data
+
+ptrlink:
+    target dst
+    target src
+    u16 dst_offset
+    u16 src_offset
+
+enum run_target_type (u8)
+    null
+    Addr
+    FighterGOBJ
+    FighterData
+    StageGOBJ
+    StageData
+    
+RECORDING ------------------------------------------------------------------
+
+rec:
+    u32 frame_count
+    u16 *frame_event_idx
+    frame_event_type *events_start
+    payload *payload_start
+    
+// payload is always 4 bytes?
+enum frame_event_type (u8)
+    null
+    
+    // lstick/trigger and buttons/cstick are merged to align their payload to 4 bytes
+    SetLStickAndTriggers_HMN:
+    SetLStickAndTriggers_CPU:
+        s8 lstick_x
+        s8 lstick_y
+        s8 trigger_l
+        s8 trigger_r
+    SetButtonsAndCStick_HMN:
+    SetButtonsAndCStick_CPU:
+        u16 buttons
+        s8 cstick_x
+        s8 cstick_y
+    
+    SetRNGSeed:
+        u32 seed
+    WhispyBlowChange:
+        u32 dir (none = 0, left = 1, right = 2)
+    FODPlatHeight_L:
+    FODPlatHeight_R:
+        f32 height
