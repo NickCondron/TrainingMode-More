@@ -7606,14 +7606,16 @@ LedgetechCounterThink:
     .set EventState, 0x0
     .set EventState_OnRebirthPlat, 0x0
     .set EventState_Recovering, 0x1
+    .set EventState_TechSucceeded, 0x2
     .set MarthState, 0x1
     .set MarthState_Wait, 0x0
     .set MarthState_Attacked, 0x1
     .set Timer, 0x2
-    .set TechSuccess, 0x3
-    .set CapturedHitlagFrames, 0x4
-    .set TechInputDuringCounterHitlagMessageDisplayed, 0x5
-    
+    .set MarthSpecialLwHitStartingFrame, 0x40    # 4 bytes
+    .set TechInputFrame, 0x44                    # 4 bytes
+    .set RelativeTechInputFrameFromStartingSpecialLwHit, 0x48
+    .set TechInputMessageDisplayed, 0x49
+
     # Menu Option Offsets
     .set StageSideOption, MenuData_OptionMenuMemory+0x2 + 0x0
 
@@ -7640,37 +7642,7 @@ LedgetechCounterThink:
     cmpwi r3, 0x0
     beq LedgetechCounterThink_Start
     # Select Side of Stage based on menu option
-    lbz r3, StageSideOption(MenuData)                      # Load stage side option (0=Random, 1=Left, 2=Right)
-    cmpwi r3, 0
-    beq LedgetechCounterThink_RandomSide
-    cmpwi r3, 1
-    beq LedgetechCounterThink_LeftSide
-    cmpwi r3, 2
-    beq LedgetechCounterThink_RightSide
-    # Default to random if invalid value
-LedgetechCounterThink_RandomSide:
-    li r3, 2
-    branchl r12, HSD_Randi
-    b LedgetechCounterThink_InitPositions
-LedgetechCounterThink_LeftSide:
-    li r3, 0                                                # 0 = Left side
-    b LedgetechCounterThink_InitPositions
-LedgetechCounterThink_RightSide:
-    li r3, 1                                                # 1 = Right side
-LedgetechCounterThink_InitPositions:
-    bl Ledgetech_InitializePositions
-    # Move Marth forward a bit
-    lfs f1, 0x2C(P2Data)
-    lfs f2, 0x4(EventConstants)
-    fmuls f1, f1, f2
-    lfs f2, 0xB0(P2Data)
-    fadds f1, f1, f2
-    stfs f1, 0xB0(P2Data)
-    # Move Falco down a bit
-    lfs f1, 0x8(EventConstants)
-    lfs f2, 0xB4(P1Data)
-    fadds f1, f1, f2
-    stfs f1, 0xB4(P1Data)
+    bl LedgetechCounterThink_SetupStageSideAndPositions
     # Clear Inputs
     bl RemoveFirstFrameInputs
     # Save State
@@ -7692,14 +7664,9 @@ LedgetechCounterThink_Start:
     rlwinm. r0, r3, 0, 31, 31
     bne LedgetechCounterThink_Restore
 
-    # Check for tech input first
-    b LedgetechCounterThink_CheckTech
-
-LedgetechCounterThink_CheckTechContinue:
-
-    # Check for counter tech input
-    mr r3, EventData
-    bl LedgetechCounterThink_CheckTechInputDuringCounterHitlag
+    bl LedgetechCounterThink_RecordTechInputFrame
+    bl LedgetechCounterThink_RecordSpecialLwHitStartingFrame
+    bl LedgetechCounterThink_DisplayTechInputTimingMessage
 
     # Switch case for state of event
     lbz r3, EventState(EventData)
@@ -7707,6 +7674,8 @@ LedgetechCounterThink_CheckTechContinue:
     beq LedgetechCounterThink_OnRebirthPlat
     cmpwi r3, EventState_Recovering
     beq LedgetechCounterThink_Recovering
+    cmpwi r3, EventState_TechSucceeded
+    beq LedgetechCounterThink_TechSucceeded
     b LedgetechCounterThink_CheckForTimer
 
 ###########################################
@@ -7733,8 +7702,13 @@ LedgetechCounterThink_Recovering:
     # Check if marth acted already
     lbz r3, MarthState(EventData)
     cmpwi r3, MarthState_Wait
-    bne LedgetechCounterThink_CheckForTimer
+    beq LedgetechCounterThink_Recovering_CheckDistanceAndInputDownB
+    # Change Event State
+    li r3, EventState_TechSucceeded
+    stb r3, EventState(EventData)
+    b LedgetechCounterThink_CheckForTimer
 
+LedgetechCounterThink_Recovering_CheckDistanceAndInputDownB:
     # Check P1s Distance from Marth
     addi r3, P1Data, 0xB0
     addi r4, P2Data, 0xB0
@@ -7755,37 +7729,24 @@ LedgetechCounterThink_Recovering:
     stb r3, Timer(EventData)
 
     b LedgetechCounterThink_CheckForTimer
+###########################################
 
-############################################
-
-LedgetechCounterThink_CheckTech:
-    # Check current action state
+###########################################
+LedgetechCounterThink_TechSucceeded:
+    # Check if succeeded in tech
     lwz r3, 0x10(P1Data)
     cmpwi r3, ASID_PassiveWall
-    beq LedgetechCounterThink_TechDetected
+    beq LedgetechCounterThink_TechSucceeded_ExtendTimer
     cmpwi r3, ASID_PassiveWallJump
-    beq LedgetechCounterThink_TechDetected
-    # No tech state, continue
-    b LedgetechCounterThink_CheckTechContinue
+    beq LedgetechCounterThink_TechSucceeded_ExtendTimer
 
-LedgetechCounterThink_TechDetected:
-    # Check if already processed
-    lbz r4, TechSuccess(EventData)
-    cmpwi r4, 0x1
-    beq LedgetechCounterThink_ExtendTimer
-    # First time detecting tech, set flag
-    li r4, 1
-    stb r4, TechSuccess(EventData)
-    b LedgetechCounterThink_CheckTechContinue
+    b LedgetechCounterThink_CheckForTimer
 
-LedgetechCounterThink_ExtendTimer:
-    # Reset Tech Bool and extend timer
-    li r4, 0
-    stb r4, TechSuccess(EventData)
-    li r4, 120
-    stb r4, Timer(EventData)
-    # Continue to main logic
-    b LedgetechCounterThink_CheckTechContinue
+LedgetechCounterThink_TechSucceeded_ExtendTimer:
+    li r3, 120
+    stb r3, Timer(EventData)
+    b LedgetechCounterThink_CheckForTimer
+###########################################
 
 LedgetechCounterThink_CheckForTimer:
     # Check Timer
@@ -7803,24 +7764,350 @@ LedgetechCounterThink_Restore:
     addi r3, EventData, EventData_SaveStateStruct
     bl SaveState_Load
     # Select Side of Stage based on menu option
-    lbz r3, StageSideOption(MenuData)                      # Load stage side option (0=Random, 1=Left, 2=Right)
+    bl LedgetechCounterThink_SetupStageSideAndPositions
+
+    # Reset Variables
+    li r3, EventState_OnRebirthPlat
+    stb r3, EventState(EventData)
+    li r3, MarthState_Wait
+    stb r3, MarthState(EventData)
+    li r3, 0
+    stb r3, Timer(EventData)
+    stw r3, MarthSpecialLwHitStartingFrame(EventData)
+    stw r3, TechInputFrame(EventData)
+    stb r3, RelativeTechInputFrameFromStartingSpecialLwHit(EventData)
+    stb r3, TechInputMessageDisplayed(EventData)
+
+LedgetechCounterThink_Exit:
+    restore
+    blr
+
+############################################
+## Record Counter Starting Frame Function ##
+############################################
+LedgetechCounterThink_RecordSpecialLwHitStartingFrame:
+    backup
+
+    bl GetAllPlayerPointers
+    mr P2Data, r6
+
+    # Skip if already recorded
+    lwz r3, MarthSpecialLwHitStartingFrame(EventData)
     cmpwi r3, 0
-    beq LedgetechCounterThink_RestoreRandomSide
+    bne LedgetechCounterThink_RecordSpecialLwHitStartingFrame_Exit
+
+    # Check if Marth is in Counter action state (0x172 = SpecialLwHit)
+    lwz r3, 0x10(P2Data)
+    cmpwi r3, 0x172
+    bne LedgetechCounterThink_RecordSpecialLwHitStartingFrame_Exit
+
+    # Record current frame Marth starting counter
+    lwz r3, TM_GameFrameCounter(r13)
+    stw r3, MarthSpecialLwHitStartingFrame(EventData)
+
+LedgetechCounterThink_RecordSpecialLwHitStartingFrame_Exit:
+    restore
+    blr
+
+######################################
+## Record Tech Input Frame Function ##
+######################################
+LedgetechCounterThink_RecordTechInputFrame:
+    backup
+
+    # Skip if already recorded
+    lbz r3, TechInputFrame(EventData)
+    cmpwi r3, 0
+    bne LedgetechCounterThink_RecordTechInputFrame_Exit
+
+    bl GetAllPlayerPointers
+    mr P1Data, r4
+
+    lwz r3, InstantButtons(P1Data)
+    andi. r4, r3, PAD_TRIGGER_L | PAD_TRIGGER_R
+    beq LedgetechCounterThink_RecordTechInputFrame_Exit
+
+    lwz r3, TM_GameFrameCounter(r13)
+    stw r3, TechInputFrame(EventData)
+
+LedgetechCounterThink_RecordTechInputFrame_Exit:
+    restore
+    blr
+
+################################################
+## Display Tech Input Timing Message Function ##
+################################################
+LedgetechCounterThink_DisplayTechInputTimingMessage:
+    backup
+
+    # If delete checking TechInputMessageDisplayed, tech input during attacked hitlag always shows "LR on Attack Hitlag 5/5" somehow...
+    lbz r3, TechInputMessageDisplayed(EventData)
     cmpwi r3, 1
-    beq LedgetechCounterThink_RestoreLeftSide
+    beq LedgetechCounterThink_DisplayTechInputTimingMessage_Exit
+
+    # Skip if not recorded yet
+    lwz r3, TechInputFrame(EventData)
+    cmpwi r3, 0
+    beq LedgetechCounterThink_DisplayTechInputTimingMessage_Exit
+
+    # Skip if not recorded yet
+    lwz r4, MarthSpecialLwHitStartingFrame(EventData)
+    cmpwi r4, 0
+    beq LedgetechCounterThink_DisplayTechInputTimingMessage_Exit
+
+    # Skip if the distance between TechInputFrame and MarthSpecialLwHitStartingFrame is too far apart
+    subf r3, r4, r3
+    cmpwi r3, -25
+    blt LedgetechCounterThink_DisplayTechInputTimingMessage_Exit
+    cmpwi r3, 28
+    bgt LedgetechCounterThink_DisplayTechInputTimingMessage_Exit
+
+    # Store the distance between TechInputFrame and MarthSpecialLwHitStartingFrame
+    stb r3, RelativeTechInputFrameFromStartingSpecialLwHit(EventData)
+
+    # Display message about the timing of tech input
+    bl LedgetechCounter_DisplayTimingMessage
+    li r4, 1
+    stb r4, TechInputMessageDisplayed(EventData)
+
+LedgetechCounterThink_DisplayTechInputTimingMessage_Exit:
+    restore
+    blr
+
+
+###########################################
+## Display Counter Tech Message Function ##
+###########################################
+LedgetechCounter_DisplayTimingMessage:
+    backup
+
+    bl GetAllPlayerPointers
+    mr P1Data, r4
+
+    # Load relative frame from event data (stored as signed byte)
+    lbz r7, RelativeTechInputFrameFromStartingSpecialLwHit(EventData)
+    extsb r7, r7
+
+    # Determine message category and color based on relative frame value
+    # Returns: r3 = text function address, r4 = color, r5 = display value
+    bl LedgetechCounter_DetermineTechInputTimingMessageCategory
+    mr r22, r3                     # Save text function address
+    mr r23, r4                     # Save color
+    mr r7, r5                      # Use display value
+
+    li r3, 4                       # Message Kind
+    lbz r4, 0xC(P1Data)            # Message Queue (player slot)
+    mr r5, r23                     # Message Color (determined by category)
+    mr r6, r22                     # Message format string (determined by category)
+    # r7 already contains the display value
+    Message_Display
+
+    restore
+    blr
+
+#########################################
+## Determine Message Category Function ##
+#########################################
+# r7 contains the relative frame value (signed) of tech input timing from the first frame of counter
+#   -6 or less: [UNtechable] before Counter (SpecialLw),          Tech input is too early and locked out
+#   -5:         [Techable]   before Counter (SpecialLw),          Buffered tech input is possible for attack hitlag of 2nd     frame 
+#   -4:         [Techable]   before Counter (SpecialLw),          Buffered tech input is possible for attack hitlag of 2nd-3rd frames
+#   -3:         [Techable]   before Counter (SpecialLw),          Buffered tech input is possible for attack hitlag of 2nd-4th frames
+#   -2 to -1:   [Techable]   before Counter (SpecialLw),          Buffered tech input is possible for attack hitlag of 2nd-5th frames
+#   0:          [UNtechable] frame 1   of Counter (SpecialLwHit), Reaction hitlag 1       out of 11 frames (Tech input during hitlag has no buffer)
+#   1 to 9:     [UNtechable] frame 1   of Counter (SpecialLwHit), Reaction hitlag 2 to 10 out of 11 frames (Tech input during hitlag has no buffer)
+#   10:         [Techable]   frame 1   of Counter (SpecialLwHit), Reaction hitlag 11      out of 11 frames (Tech input during hitlag has no buffer, but only the last frame is the exception. Buffered tech input is possible for attack hitlag of 2nd-5th frames)
+#   11 to 12:   [Techable]   frame 2-3 of Counter (SpecialLwHit), Buffered tech input is possible for attack hitlag of 2nd-5th frames
+#   13:         [UNtechable] frame 4   of Counter (SpecialLwHit), Attack hitlag 1      out of 5 frames (Tech input ignored / not SDIable)
+#   14 to 17:   [Techable]   frame 4   of Counter (SpecialLwHit), Attack hitlag 2 to 5 out of 5 frames (Only the method of simultaneous SDI and tech input is possible)
+#   18 or more: [UNtechable] frame 5 or later of Counter (SpecialLwHit)
+LedgetechCounter_DetermineTechInputTimingMessageCategory:
+    backup
+
+    # Check ranges and set appropriate text function, color, and display value
+    # Range: -6 or less = Tech input is too early and locked out
+    cmpwi r7, -6
+    ble LedgetechCounter_DetermineTechInputTimingMessageCategory_TooEarly
+
+    # Range: -5 to -1 = Good timing for buffered tech input
+    cmpwi r7, -1
+    ble LedgetechCounter_DetermineTechInputTimingMessageCategory_Buffered
+
+    # Range: 0 to 10 = Tech input during "reaction" hitlag of Marth's counter, it cannot buffer tech basically
+    cmpwi r7, 10
+    ble LedgetechCounter_DetermineTechInputTimingMessageCategory_Reaction
+
+    # Range: 11 to 12  = Good timing for buffered tech input
+    cmpwi r7, 12
+    ble LedgetechCounter_DetermineTechInputTimingMessageCategory_Buffered
+
+    # Range: 13 to 17 = Tech input during attacked hitlag (only for the method of simultaneous SDI and tech input is possible)
+    cmpwi r7, 17
+    ble LedgetechCounter_DetermineTechInputTimingMessageCategory_Attack
+
+    # Range: 18+ = Too Late (Hitlag has end and knockback has started)
+    b LedgetechCounter_DetermineTechInputTimingMessageCategory_TooLate
+
+LedgetechCounter_DetermineTechInputTimingMessageCategory_TooEarly:
+    bl LedgetechCounter_TechInputTimingMessage_TooEarly_Text
+    mflr r3                       # Text function address
+    li r4, MSGCOLOR_RED
+    subi r5, r7, 13               # Calculate how many frames before ATTACK hitlag
+    neg r5, r5                    # Display absolute value (positive)
+    b LedgetechCounter_DetermineTechInputTimingMessageCategory_Exit
+
+LedgetechCounter_DetermineTechInputTimingMessageCategory_Buffered:
+    bl LedgetechCounter_TechInputTimingMessage_Buffered_Text
+    mflr r3                       # Text function address
+    li r4, MSGCOLOR_GREEN
+    subi r5, r7, 13               # Calculate how many frames before ATTACK hitlag
+    neg r5, r5                    # Display absolute value (positive)
+    b LedgetechCounter_DetermineTechInputTimingMessageCategory_Exit
+
+LedgetechCounter_DetermineTechInputTimingMessageCategory_Reaction:
+    bl LedgetechCounter_TechInputTimingMessage_ReactionHitlag_Text
+    mflr r3                       # Text function address
+    # Color depends on value: 0-9 = red, 10 = green
+    # Reason: Tech input during hitlag has no buffer, but only the last frame of hitlag is the exception
+    cmpwi r7, 10
+    beq LedgetechCounter_DetermineTechInputTimingMessageCategory_Reaction_Green
+    li r4, MSGCOLOR_RED
+    b LedgetechCounter_DetermineTechInputTimingMessageCategory_Reaction_Value
+LedgetechCounter_DetermineTechInputTimingMessageCategory_Reaction_Green:
+    li r4, MSGCOLOR_GREEN
+LedgetechCounter_DetermineTechInputTimingMessageCategory_Reaction_Value:
+    # Calculate reaction hitlag progress: 0 = 1/11 frame of reaction hitlag, 1 = 2/11 frame, ..., 10 = 11/11 frame
+    addi r5, r7, 1                # r5 = r7 + 1 (e.g., 0+1=1, 10+1=11)
+    b LedgetechCounter_DetermineTechInputTimingMessageCategory_Exit
+
+LedgetechCounter_DetermineTechInputTimingMessageCategory_Attack:
+    bl LedgetechCounter_TechInputTimingMessage_AttackHitlag_Text
+    mflr r3                       # Text function address
+    # Color depends on value: 13 = red, 14-17 = green
+    # Reason: Tech input during hitlag has no buffer, so that method of "simultaneous SDI and tech input" is only possible. But we cannot SDI on the first frame of hitlag.
+    cmpwi r7, 13
+    beq LedgetechCounter_DetermineTechInputTimingMessageCategory_Attack_Red
+    li r4, MSGCOLOR_GREEN
+    b LedgetechCounter_DetermineTechInputTimingMessageCategory_Attack_Value
+LedgetechCounter_DetermineTechInputTimingMessageCategory_Attack_Red:
+    li r4, MSGCOLOR_RED
+LedgetechCounter_DetermineTechInputTimingMessageCategory_Attack_Value:
+    # Calculate hitlag progress
+    #   r7 is relative frames from 1st frame of counter and its hitlag (0 is the 1st frame).
+    #   r7 value for the first frame of "attack" hitlag is 13 (11 frames of "Reaction" hitlag + 2 anticipation frames)
+    #   So to calculate the timing of L/R input during attacked hitlag, subtract 12 : 13 = 1/5 hitlag frame, 14 = 2/5 hitlag frame, ..., 17 = 5/5 hitlag frame
+    subi r5, r7, 12               # r5 = L/R-inputting frame during hitlag frames (1-5)
+    b LedgetechCounter_DetermineTechInputTimingMessageCategory_Exit
+
+LedgetechCounter_DetermineTechInputTimingMessageCategory_TooLate:
+    bl LedgetechCounter_TechInputTimingMessage_TooLate_Text
+    mflr r3                       # Text function address
+    li r4, MSGCOLOR_RED           # * Actually there is one way to tech on the 1st frame of knockback (SDI during hitlag and keep stick leaned and tech input on the 1st frame of knockback), but I don't change the text color because this is hard to understanding 
+    # Calculate frame from hitlag ends
+    subi r5, r7, 17               # Display relative value - 17 (e.g., 18->1, 22->5). 17 includes: 11 frames reaction hitlag + 2 frames before attack + 5 frames hitlag
+    b LedgetechCounter_DetermineTechInputTimingMessageCategory_Exit
+
+LedgetechCounter_DetermineTechInputTimingMessageCategory_Exit:
+    # Return values: r3 = text function, r4 = color, r5 = display value
+    restore
+    blr
+
+######
+LedgetechCounter_Constants:
+    blrl
+    .float 33                                           # Mm away from fox to init counter
+    .float 5                                            # Mm to move marth forward after placing on ledge
+    .float -15                                          # Mm to move spacies down after placing in the air
+
+######
+
+###################################
+## Ledgetech Counter WINDOW INFO ##
+###################################
+LedgetechCounterWindowInfo:
+    blrl
+    # amount of options, amount of options in each window
+    .long 0x00020000    # 1 window, Stage Side has 3 options
+
+#########################################
+## Ledgetech Counter WINDOW TEXT FUNCT ##
+#########################################
+LedgetechCounterWindowText:
+    blrl
+
+#########################################
+## Ledgetech Counter Stage Side Option ##
+#########################################
+    # Window Title
+    .string "Stage Side"
+    .align 2
+    # Option 1
+    .string "Random"
+    .align 2
+    # Option 2
+    .string "Left"
+    .align 2
+    # Option 3
+    .string "Right"
+    .align 2
+
+#######################################################
+## Ledgetech Counter Tech Input Timing Message Texts ##
+#######################################################
+LedgetechCounter_TechInputTimingMessage_TooEarly_Text:
+    blrl
+    .string "Too Early LR\n%dF Before Hitlag"
+    .align 2
+
+LedgetechCounter_TechInputTimingMessage_Buffered_Text:
+    blrl
+    .string "Buffered LR\n%dF Before Hitlag"
+    .align 2
+
+LedgetechCounter_TechInputTimingMessage_ReactionHitlag_Text:
+    blrl
+    .string "LR on Reaction\nHitlag: %d/11"
+    .align 2
+
+LedgetechCounter_TechInputTimingMessage_AttackHitlag_Text:
+    blrl
+    .string "LR on Attack\nHitlag: %d/5"
+    .align 2
+
+LedgetechCounter_TechInputTimingMessage_TooLate_Text:
+    blrl
+    .string "Too Late LR\n%dF After Hitlag Ends"
+    .align 2
+
+
+#############################################
+## Setup Stage Side and Positions Function ##
+#############################################
+LedgetechCounterThink_SetupStageSideAndPositions:
+    backup
+
+    # Load stage side option (0=Random, 1=Left, 2=Right)
+    lbz r3, StageSideOption(MenuData)
+    cmpwi r3, 0
+    beq LedgetechCounterThink_SetupStage_RandomSide
+    cmpwi r3, 1
+    beq LedgetechCounterThink_SetupStage_LeftSide
     cmpwi r3, 2
-    beq LedgetechCounterThink_RestoreRightSide
-    # Default to random if invalid value
-LedgetechCounterThink_RestoreRandomSide:
+    beq LedgetechCounterThink_SetupStage_RightSide
+
+LedgetechCounterThink_SetupStage_RandomSide:
     li r3, 2
     branchl r12, HSD_Randi
-    b LedgetechCounterThink_RestoreInitPositions
-LedgetechCounterThink_RestoreLeftSide:
-    li r3, 0                                                # 0 = Left side
-    b LedgetechCounterThink_RestoreInitPositions
-LedgetechCounterThink_RestoreRightSide:
-    li r3, 1                                                # 1 = Right side
-LedgetechCounterThink_RestoreInitPositions:
+    b LedgetechCounterThink_SetupStage_InitPositions
+
+LedgetechCounterThink_SetupStage_LeftSide:
+    li r3, 0  # 0 = Left side
+    b LedgetechCounterThink_SetupStage_InitPositions
+
+LedgetechCounterThink_SetupStage_RightSide:
+    li r3, 1  # 1 = Right side
+
+LedgetechCounterThink_SetupStage_InitPositions:
     bl Ledgetech_InitializePositions
     # Move Marth forward a bit
     lfs f1, 0x2C(P2Data)
@@ -7835,180 +8122,8 @@ LedgetechCounterThink_RestoreInitPositions:
     fadds f1, f1, f2
     stfs f1, 0xB4(P1Data)
 
-    # Reset Variables
-    li r3, EventState_OnRebirthPlat
-    stb r3, EventState(EventData)
-    li r3, MarthState_Wait
-    stb r3, MarthState(EventData)
-    li r3, 0
-    stb r3, Timer(EventData)
-    stb r3, TechSuccess(EventData)
-    stb r3, TechInputDuringCounterHitlagMessageDisplayed(EventData)                         # Clear message displayed flag
-
-LedgetechCounterThink_Exit:
     restore
     blr
-
-##################################
-## Check Counter Input Function ##
-##################################
-LedgetechCounterThink_CheckTechInputDuringCounterHitlag:
-    backup
-    
-    mr EventData, r3
-    
-    bl GetAllPlayerPointers
-    mr P1GObj, r3
-    mr P1Data, r4
-    mr P2GObj, r5
-    mr P2Data, r6
-    
-    # Check if Marth is in Counter action state (0x172 = SpecialLwHit)
-    lwz r3, 0x10(P2Data)
-    cmpwi r3, 0x172
-    bne LedgetechCounterThink_CheckTechInputDuringCounterHitlag_Exit
-    
-    # Check if it's frame 1 of the Counter state
-    lhz r3, TM_FramesinCurrentAS(P2Data) 
-    cmpwi r3, 0x0
-    bne LedgetechCounterThink_CheckTechInputDuringCounterHitlag_Exit
-    
-    # Check for tech input (Tech Input During Counter Hitlag makes tech fail and be lockout, so this means failure of ledgetech)
-    lwz r3, 0x668(P1Data)                                  # instant buttons
-    andi. r4, r3, 0x0060                                   # L, R buttons (0x0040 | 0x0020)
-    beq LedgetechCounterThink_CheckTechInputDuringCounterHitlag_Exit
-
-    # Check if message is already displayed
-    lbz r4, TechInputDuringCounterHitlagMessageDisplayed(EventData)
-    cmpwi r4, 1
-    beq LedgetechCounterThink_CheckTechInputDuringCounterHitlag_Exit        # Already displaying, don't capture again
-
-    # Capture hitlag frames at the moment of input (only first time)
-    lfs f1, 0x195c(P1Data)                                 # load hitlag frames as float
-    fctiwz f1, f1                                          # convert to integer
-    stfd f1, -0x8(r1)                                      # store to stack
-    lwz r3, -0x4(r1)                                       # load integer part (hitlag remaining)
-    # Calculate 12 - hitlag_remaining
-    li r4, 12                                              # load constant 12
-    subf r3, r3, r4                                        # r3 = 12 - hitlag_remaining
-    stb r3, CapturedHitlagFrames(EventData)                # store calculated value
-    
-    # Set message displayed flag
-    li r3, 1
-    stb r3, TechInputDuringCounterHitlagMessageDisplayed(EventData)
-    
-    # Display message
-    mr r3, EventData
-    bl LedgetechCounter_DisplayTechInputDuringCounterHitlagMessage
-
-LedgetechCounterThink_CheckTechInputDuringCounterHitlag_Exit:
-    restore
-    blr
-
-###########################################
-## Display Counter Tech Message Function ##
-###########################################
-LedgetechCounter_DisplayTechInputDuringCounterHitlagMessage:
-    backup
-    
-    # Store EventData parameter from r3
-    mr EventData, r3                                       # Use defined EventData register
-    
-    # Re-acquire player data pointers
-    bl GetAllPlayerPointers
-    mr P1GObj, r3                                          # Use defined register names
-    mr P1Data, r4
-    mr P2GObj, r5
-    mr P2Data, r6
-    
-    # Create text structure
-    mr r3, P1Data                                          # p1 data
-    li r4, 120                                             # text timeout (2 seconds)
-    li r5, 0                                               # Area to Display (0-2)
-    li r6, OSD.Miscellaneous                               # Window ID
-    branchl r12, TextCreateFunction
-    mr r22, r3                                             # backup text pointer
-    
-    # Set text color to red
-    load r3, 0xffa2baff                                    # Red text color
-    stw r3, 0x30(r22)                                      # store color to text structure
-    
-    # Create Text 1
-    mr r3, r22                                             # text pointer
-    bl LedgetechCounter_TechInputDuringCounterHitlag_TopText
-    mflr r4
-    lfs f1, -0x37B4(rtoc)                                  # default text X/Y
-    lfs f2, -0x37B4(rtoc)                                  # default text X/Y
-    branchl r12, Text_InitializeSubtext
-    
-    # Create Text 2 with saved hitlag frame parameter
-    mr r3, r22                                             # text pointer
-    bl LedgetechCounter_TechInputDuringCounterHitlag_BottomText
-    mflr r4                                                # text format
-    lfs f1, -0x37B4(rtoc)                                  # default text X/Y
-    lfs f2, -0x37B0(rtoc)                                  # default text X/Y (different Y position)
-    # Load saved hitlag frames from event data
-    lbz r5, CapturedHitlagFrames(EventData)                # load saved hitlag frames
-    branchl r12, Text_InitializeSubtext
-
-    restore
-    blr
-
-######
-LedgetechCounter_Constants:
-    blrl
-    .float 33                                           # Mm away from fox to init counter
-    .float 5                                            # Mm to move marth forward after placing on ledge
-    .float -15                                          # Mm to move spacies down after placing in the air
-
-######
-
-###########################################
-## Ledgetech Counter WINDOW INFO FUNCT ##
-###########################################
-LedgetechCounterWindowInfo:
-    blrl
-    # amount of options, amount of options in each window
-    .long 0x00020000                                    # 1 window, Stage Side has 3 options
-
-###########################################
-## Ledgetech Counter WINDOW TEXT FUNCT ##
-###########################################
-LedgetechCounterWindowText:
-    blrl
-
-#############################
-## Stage Side Option ##
-#############################
-
-    # Window Title
-    .string "Stage Side"
-    .align 2
-
-    # Option 1
-    .string "Random"
-    .align 2
-
-    # Option 2
-    .string "Left"
-    .align 2
-
-    # Option 3
-    .string "Right"
-    .align 2
-
-##################################
-## Ledgetech Counter TEXT FUNCT ##
-##################################
-LedgetechCounter_TechInputDuringCounterHitlag_TopText:
-    blrl
-    .string "L/R on Counter"
-    .align 2
-
-LedgetechCounter_TechInputDuringCounterHitlag_BottomText:
-    blrl
-    .string "Hitlag %d/11"
-    .align 2
 
 ######
 
