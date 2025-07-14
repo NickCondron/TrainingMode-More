@@ -6384,7 +6384,10 @@ void Event_Think_LabState_Normal(GOBJ *event) {
                 stc_playback_cancelled_cpu |= Record_PastLastInput(1);
                 break;
             case PLAYBACKCOUNTER_ON_HIT_CPU:
-                if (IsHitlagVictim(cpu) && eventData->cpu_lasthit != cpu_data->dmg.atk_instance_hurtby) {
+                if (
+                    (IsHitlagVictim(cpu) && eventData->cpu_lasthit != cpu_data->dmg.atk_instance_hurtby)
+                    || CPU_IsGrabbed(cpu, hmn)
+                ) {
                     eventData->cpu_countertimer = 0;
                     eventData->cpu_hitnum++;
                     eventData->cpu_lasthit = cpu_data->dmg.atk_instance_hurtby;
