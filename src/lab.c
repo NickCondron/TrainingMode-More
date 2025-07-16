@@ -5253,8 +5253,8 @@ void Export_EnterNameInit(GOBJ *export_gobj)
     text_desc->trans.Y = 12;
     text_desc->viewport_scale.X = MENU_CANVASSCALE;
     text_desc->viewport_scale.Y = MENU_CANVASSCALE;
-    Text_AddSubtext(text_desc, 0, 0, "A: Select  B: Backspace  Y: Caps  Start: Confirm"); // add description
-    Text_AddSubtext(text_desc, 0, 40, "     X: Space  L: Cursor left  R: Cursor right");  // add description
+    Text_AddSubtext(text_desc, 0, 0, "      A: Select  B: Backspace  Y: Caps");
+    Text_AddSubtext(text_desc, 0, 40, "           X: Space  Start: Confirm");
 
     // create filename
     Text *text_filename = Text_CreateText(2, menu_data->canvas_menu);
