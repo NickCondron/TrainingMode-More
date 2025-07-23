@@ -77,7 +77,6 @@ typedef struct MenuData
     u16 popup_cursor;
     u16 popup_scroll;
     GOBJ *popup;
-    evMenu *menu_assets;
     JOBJ *row_joints[MENU_MAXOPTION][2]; // pointers to row jobjs
     JOBJ *highlight_menu;                // pointer to the highlight jobj
     JOBJ *highlight_popup;               // pointer to the highlight jobj
