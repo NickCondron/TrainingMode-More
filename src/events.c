@@ -829,26 +829,17 @@ void EventLoad(void)
 
 void EventUpdate(void)
 {
-
-    // get event info
-    EventDesc *event_desc = stc_event_vars.event_desc;
-    evFunction *evFunction = &stc_event_vars.evFunction;
     GOBJ *menu_gobj = stc_event_vars.menu_gobj;
-
-    // run menu logic if exists
-    if (menu_gobj != 0)
-    {
-        // update menu
+    if (menu_gobj)
         EventMenu_Update(menu_gobj);
-    }
 
-    // run custom event update function
-    if (evFunction->Event_Update != 0)
-    {
+    evFunction *evFunction = &stc_event_vars.evFunction;
+    if (evFunction->Event_Update)
         evFunction->Event_Update();
-    }
-    else
-        Develop_UpdateMatchHotkeys();
+
+    // This is the vanilla callback. This code handles the vanilla develop.
+    // mode shortcuts. We could probably delete it if we want to.
+    Develop_UpdateMatchHotkeys();
 }
 
 //////////////////////
