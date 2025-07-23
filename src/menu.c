@@ -114,7 +114,7 @@ void EventMenu_Update(GOBJ *gobj)
             // Get the current menu
             EventMenu *curr_menu = menu_data->curr_menu;
 
-            if ((pad->down & HSD_BUTTON_Y) != 0 && menu_data->curr_menu->shortcuts != 0)
+            if ((pad->down & HSD_BUTTON_Y) && menu_data->curr_menu->shortcuts != 0)
                 menu_data->mode = MenuMode_Shortcut;
 
             // menu think
@@ -226,10 +226,8 @@ void EventMenu_MenuThink(GOBJ *gobj, EventMenu *curr_menu) {
     int inputs_rapid = pad->rapidFire;
     int inputs_held = pad->held;
     int inputs = inputs_rapid;
-    if (
-        (inputs_held & HSD_TRIGGER_R) != 0
-        || (pad->triggerRight >= ANALOG_TRIGGER_THRESHOLD)
-    ) {
+    if ((inputs_held & HSD_TRIGGER_R)
+        || (pad->triggerRight >= ANALOG_TRIGGER_THRESHOLD)) {
         inputs = inputs_held;
     }
 
@@ -248,7 +246,7 @@ void EventMenu_MenuThink(GOBJ *gobj, EventMenu *curr_menu) {
     s16 value_max = value_min + currOption->value_num;
 
     // check for dpad down
-    if (((inputs & HSD_BUTTON_DOWN) != 0) || ((inputs & HSD_BUTTON_DPAD_DOWN) != 0)) {
+    if ((inputs & HSD_BUTTON_DOWN) || (inputs & HSD_BUTTON_DPAD_DOWN)) {
         // loop to find next option
         int cursor_next = 0; // how much to move the cursor by
         for (int i = 1; (cursor + scroll + i) < option_num; i++) {
@@ -283,7 +281,7 @@ void EventMenu_MenuThink(GOBJ *gobj, EventMenu *curr_menu) {
     }
 
     // check for dpad up
-    else if (((inputs & HSD_BUTTON_UP) != 0) || ((inputs & HSD_BUTTON_DPAD_UP) != 0)) {
+    else if ((inputs & HSD_BUTTON_UP) || (inputs & HSD_BUTTON_DPAD_UP)) {
         // loop to find next option
         int cursor_next = 0; // how much to move the cursor by
         for (int i = 1; (cursor + scroll - i) >= 0; i++) {
@@ -318,7 +316,7 @@ void EventMenu_MenuThink(GOBJ *gobj, EventMenu *curr_menu) {
     }
 
     // check for left
-    else if (((inputs & HSD_BUTTON_LEFT) != 0) || ((inputs & HSD_BUTTON_DPAD_LEFT) != 0))
+    else if ((inputs & HSD_BUTTON_LEFT) || (inputs & HSD_BUTTON_DPAD_LEFT))
     {
         if ((currOption->kind == OPTKIND_STRING) || (currOption->kind == OPTKIND_INT) || (currOption->kind == OPTKIND_FLOAT))
         {
@@ -341,7 +339,7 @@ void EventMenu_MenuThink(GOBJ *gobj, EventMenu *curr_menu) {
         }
     }
     // check for right
-    else if (((inputs & HSD_BUTTON_RIGHT) != 0) || ((inputs & HSD_BUTTON_DPAD_RIGHT) != 0))
+    else if ((inputs & HSD_BUTTON_RIGHT) || (inputs & HSD_BUTTON_DPAD_RIGHT))
     {
         // check for valid option kind
         if ((currOption->kind == OPTKIND_STRING) || (currOption->kind == OPTKIND_INT) || (currOption->kind == OPTKIND_FLOAT))
@@ -513,7 +511,7 @@ void EventMenu_PopupThink(GOBJ *gobj, EventMenu *curr_menu)
     int inputs_rapid = pad->rapidFire;
     int inputs_held = pad->held;
     int inputs = inputs_rapid;
-    if ((inputs_held & HSD_TRIGGER_R) != 0)
+    if (inputs_held & HSD_TRIGGER_R)
         inputs = inputs_held;
 
     // get option variables
@@ -530,7 +528,7 @@ void EventMenu_PopupThink(GOBJ *gobj, EventMenu *curr_menu)
     }
 
     // check for dpad down
-    if (((inputs & HSD_BUTTON_DOWN) != 0) || ((inputs & HSD_BUTTON_DPAD_DOWN) != 0))
+    if ((inputs & HSD_BUTTON_DOWN) || (inputs & HSD_BUTTON_DPAD_DOWN))
     {
         cursor += 1;
 
@@ -568,7 +566,7 @@ void EventMenu_PopupThink(GOBJ *gobj, EventMenu *curr_menu)
         }
     }
     // check for dpad up
-    else if (((inputs & HSD_BUTTON_UP) != 0) || ((inputs & HSD_BUTTON_DPAD_UP) != 0))
+    else if ((inputs & HSD_BUTTON_UP) || (inputs & HSD_BUTTON_DPAD_UP))
     {
         cursor -= 1;
 
@@ -607,7 +605,7 @@ void EventMenu_PopupThink(GOBJ *gobj, EventMenu *curr_menu)
     }
 
     // check for A
-    else if ((inputs_rapid & HSD_BUTTON_A) != 0)
+    else if (inputs_rapid & HSD_BUTTON_A)
     {
 
         // update val
@@ -627,7 +625,7 @@ void EventMenu_PopupThink(GOBJ *gobj, EventMenu *curr_menu)
         SFX_PlayCommon(1);
     }
     // check to go back a menu
-    else if ((inputs_rapid & HSD_BUTTON_B) != 0)
+    else if (inputs_rapid & HSD_BUTTON_B)
     {
 
         EventMenu_DestroyPopup(gobj);

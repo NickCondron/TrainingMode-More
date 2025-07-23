@@ -850,17 +850,17 @@ void Update_Camera()
                 COBJ *cobj = Match_GetCObj();
 
                 // adjust pan
-                if ((held & HSD_BUTTON_A) != 0)
+                if (held & HSD_BUTTON_A)
                 {
                     DevCam_AdjustPan(cobj, stickX * -1, stickY * -1);
                 }
                 // adjust zoom
-                else if ((held & HSD_BUTTON_Y) != 0)
+                else if (held & HSD_BUTTON_Y)
                 {
                     DevCam_AdjustZoom(cobj, stickY);
                 }
                 // adjust rotate
-                else if ((held & HSD_BUTTON_B) != 0)
+                else if (held & HSD_BUTTON_B)
                 {
                     MatchCamera *matchCam = stc_matchcam;
                     DevCam_AdjustRotate(cobj, &matchCam->devcam_rot, &matchCam->devcam_pos, stickX, stickY);

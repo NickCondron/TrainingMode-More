@@ -3035,17 +3035,17 @@ void Update_Camera()
                 COBJ *cobj = Match_GetCObj();
 
                 // adjust pan
-                if ((held & HSD_BUTTON_A) != 0)
+                if (held & HSD_BUTTON_A)
                 {
                     DevCam_AdjustPan(cobj, stickX * -1, stickY * -1);
                 }
                 // adjust zoom
-                else if ((held & HSD_BUTTON_Y) != 0)
+                else if (held & HSD_BUTTON_Y)
                 {
                     DevCam_AdjustZoom(cobj, stickY);
                 }
                 // adjust rotate
-                else if ((held & HSD_BUTTON_B) != 0)
+                else if (held & HSD_BUTTON_B)
                 {
                     MatchCamera *matchCam = stc_matchcam;
                     DevCam_AdjustRotate(cobj, &matchCam->devcam_rot, &matchCam->devcam_pos, stickX, stickY);
@@ -3207,7 +3207,7 @@ void CustomTDI_Update(GOBJ *gobj)
     int inputs = pad->down;
 
     // if press A, save stick
-    if ((inputs & HSD_BUTTON_A) != 0 && stc_tdi_val_num < TDI_HITNUM) {
+    if ((inputs & HSD_BUTTON_A) && stc_tdi_val_num < TDI_HITNUM) {
         GOBJ *hmn = Fighter_GetGObj(0);
         GOBJ *cpu = Fighter_GetGObj(1);
         FighterData *hmn_data = hmn->userdata;
@@ -3231,13 +3231,13 @@ void CustomTDI_Update(GOBJ *gobj)
     }
 
     // if press X, go back a hit
-    if ((inputs & HSD_BUTTON_X) != 0 && stc_tdi_val_num > 0) {
+    if ((inputs & HSD_BUTTON_X) && stc_tdi_val_num > 0) {
         stc_tdi_val_num--;
         SFX_PlayCommon(0);
     }
 
     // if press B, exit
-    if ((inputs & HSD_BUTTON_B) != 0)
+    if (inputs & HSD_BUTTON_B)
     {
         CustomTDI_Destroy(gobj);
         return;
@@ -5370,8 +5370,7 @@ int Export_EnterNameThink(GOBJ *export_gobj)
             SFX_PlayCommon(3);
         }
     }
-    // if B
-    else if ((inputs & HSD_BUTTON_B))
+    else if (inputs & HSD_BUTTON_B)
     {
 
         // check if can delete
@@ -5400,8 +5399,7 @@ int Export_EnterNameThink(GOBJ *export_gobj)
             return 0;
         }
     }
-    // if Y
-    if ((inputs & HSD_BUTTON_Y))
+    if (inputs & HSD_BUTTON_Y)
     {
         // toggle capslock
         if (export_data->caps_lock == 0)
@@ -5414,8 +5412,7 @@ int Export_EnterNameThink(GOBJ *export_gobj)
 
         SFX_PlayCommon(1);
     }
-    // if X
-    if ((inputs & HSD_BUTTON_X))
+    if (inputs & HSD_BUTTON_X)
     {
 
         // check if any remaining characters
@@ -5441,8 +5438,7 @@ int Export_EnterNameThink(GOBJ *export_gobj)
             TMLOG("max characters!\n");
         }
     }
-    // if START
-    if ((inputs & HSD_BUTTON_START))
+    if (inputs & HSD_BUTTON_START)
     {
         // at least 1 character
         if (export_data->filename_cursor > 0)
@@ -5553,7 +5549,6 @@ int Export_ConfirmThink(GOBJ *export_gobj)
 
         int update_cursor = 0;
 
-        // if left
         if ((inputs & HSD_BUTTON_LEFT) || (inputs & HSD_BUTTON_DPAD_LEFT))
         {
             if (export_data->confirm_cursor > 0)
@@ -5562,7 +5557,6 @@ int Export_ConfirmThink(GOBJ *export_gobj)
                 update_cursor = 1;
             }
         }
-        // if right
         else if ((inputs & HSD_BUTTON_RIGHT) || (inputs & HSD_BUTTON_DPAD_RIGHT))
         {
             if (export_data->confirm_cursor < 1)
@@ -5571,9 +5565,7 @@ int Export_ConfirmThink(GOBJ *export_gobj)
                 update_cursor = 1;
             }
         }
-
-        // if b
-        else if ((inputs & HSD_BUTTON_B))
+        else if (inputs & HSD_BUTTON_B)
         {
             Export_ConfirmExit(export_gobj);
 
@@ -5582,7 +5574,6 @@ int Export_ConfirmThink(GOBJ *export_gobj)
 
             return 0;
         }
-        // if a
         else if ((inputs & HSD_BUTTON_A) || (inputs & HSD_BUTTON_START))
         {
 
