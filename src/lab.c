@@ -3084,7 +3084,7 @@ void CustomTDI_Apply(GOBJ *cpu, GOBJ *hmn, CustomTDI *di)
 void Lab_SelectCustomTDI(GOBJ *menu_gobj)
 {
     MenuData *menu_data = menu_gobj->userdata;
-    EventMenu *curr_menu = menu_data->currMenu;
+    EventMenu *curr_menu = menu_data->curr_menu;
     evMenu *menuAssets = event_vars->menu_assets;
     GOBJ *event_gobj = event_vars->event_gobj;
     LabData *event_data = event_gobj->userdata;
@@ -4556,14 +4556,14 @@ void Record_MemcardLoad(int slot, int file_no)
 
             // enter recording menu
             MenuData *menu_data = event_vars->menu_gobj->userdata;
-            EventMenu *curr_menu = menu_data->currMenu;
+            EventMenu *curr_menu = menu_data->curr_menu;
             curr_menu->state = EMSTATE_OPENSUB;
             // update curr_menu
             EventMenu *next_menu = curr_menu->options[2].menu;
             next_menu->prev = curr_menu;
             next_menu->state = EMSTATE_FOCUS;
             curr_menu = next_menu;
-            menu_data->currMenu = curr_menu;
+            menu_data->curr_menu = curr_menu;
 
             // save to personal savestate
             event_vars->Savestate_Save_v1(event_vars->savestate, 0);
@@ -4748,7 +4748,7 @@ void ImageScale(RGB565 *out_img, RGB565 *in_img, int OutWidth, int OutHeight, in
 void Export_Init(GOBJ *menu_gobj)
 {
     MenuData *menu_data = menu_gobj->userdata;
-    EventMenu *curr_menu = menu_data->currMenu;
+    EventMenu *curr_menu = menu_data->curr_menu;
     evMenu *menuAssets = event_vars->menu_assets;
 
     // create gobj

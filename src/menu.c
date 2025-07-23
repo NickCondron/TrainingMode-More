@@ -20,18 +20,18 @@ GOBJ *EventMenu_Init(EventMenu *start_menu)
 
     // Create menu gobj
     GOBJ *gobj = GObj_Create(0, 0, 0);
-    MenuData *menuData = calloc(sizeof(MenuData));
-    GObj_AddUserData(gobj, 4, HSD_Free, menuData);
+    MenuData *menu_data = calloc(sizeof(MenuData));
+    GObj_AddUserData(gobj, 4, HSD_Free, menu_data);
 
     // Add gx_link
     GObj_AddGXLink(gobj, GXLink_Common, GXLINK_MENUMODEL, GXPRI_MENUMODEL);
 
     // Create 2 text canvases (menu and popup)
-    menuData->canvas_menu = Text_CreateCanvas(2, cam_gobj, 9, 13, 0, GXLINK_MENUTEXT, GXPRI_MENUTEXT, MENUCAM_GXPRI);
-    menuData->canvas_popup = Text_CreateCanvas(2, cam_gobj, 9, 13, 0, GXLINK_MENUTEXT, GXPRI_POPUPTEXT, MENUCAM_GXPRI);
+    menu_data->canvas_menu = Text_CreateCanvas(2, cam_gobj, 9, 13, 0, GXLINK_MENUTEXT, GXPRI_MENUTEXT, MENUCAM_GXPRI);
+    menu_data->canvas_popup = Text_CreateCanvas(2, cam_gobj, 9, 13, 0, GXLINK_MENUTEXT, GXPRI_POPUPTEXT, MENUCAM_GXPRI);
 
-    // Init currMenu
-    menuData->currMenu = start_menu;
+    // Init curr_menu
+    menu_data->curr_menu = start_menu;
 
     // set menu as not hidden
     event_vars->hide_menu = 0;
@@ -42,23 +42,23 @@ GOBJ *EventMenu_Init(EventMenu *start_menu)
 void EventMenu_Update(GOBJ *gobj)
 {
 
-    //MenuCamData *camData = gobj->userdata;
-    MenuData *menuData = gobj->userdata;
-    EventMenu *currMenu = menuData->currMenu;
+    //MenuCamData *cam_data = gobj->userdata;
+    MenuData *menu_data = gobj->userdata;
+    EventMenu *curr_menu = menu_data->curr_menu;
 
     int update_menu = 1;
 
     // if a custom menu is in use, run its function
-    if (menuData->custom_gobj_think != 0)
+    if (menu_data->custom_gobj_think != 0)
     {
-        update_menu = menuData->custom_gobj_think(menuData->custom_gobj);
+        update_menu = menu_data->custom_gobj_think(menu_data->custom_gobj);
     }
 
     // if this menu has an upate function, run its function
-    else if ((menuData->mode == MenuMode_Paused) && (currMenu->menu_think != 0))
+    else if ((menu_data->mode == MenuMode_Paused) && (curr_menu->menu_think != 0))
     {
-        update_menu = currMenu->menu_think(gobj);
-        EventMenu_UpdateText(gobj, currMenu);
+        update_menu = curr_menu->menu_think(gobj);
+        EventMenu_UpdateText(gobj, curr_menu);
     }
 
     int exit_menu = 0;
@@ -86,52 +86,52 @@ void EventMenu_Update(GOBJ *gobj)
                     if ((pad->held & HSD_BUTTON_X) && (pad->down & HSD_BUTTON_DPAD_UP))
                     {
                         pause_pressed = 1;
-                        menuData->controller_index = controller_index;
+                        menu_data->controller_index = controller_index;
                         break;
                     }
                 }
                 else if ((pad->down & HSD_BUTTON_START) != 0)
                 {
                     pause_pressed = 1;
-                    menuData->controller_index = controller_index;
+                    menu_data->controller_index = controller_index;
                     break;
                 }
             }
         }
 
-        HSD_Pad *pad = PadGet(menuData->controller_index, PADGET_MASTER);
+        HSD_Pad *pad = PadGet(menu_data->controller_index, PADGET_MASTER);
 
         // change pause state
         if (pause_pressed != 0)
         {
-            enter_menu = menuData->mode == MenuMode_Normal;
-            exit_menu = menuData->mode != MenuMode_Normal;
+            enter_menu = menu_data->mode == MenuMode_Normal;
+            exit_menu = menu_data->mode != MenuMode_Normal;
         }
 
         // run menu logic if the menu is shown
-        if (menuData->mode == MenuMode_Paused && event_vars->hide_menu == 0)
+        if (menu_data->mode == MenuMode_Paused && event_vars->hide_menu == 0)
         {
             // Get the current menu
-            EventMenu *currMenu = menuData->currMenu;
+            EventMenu *curr_menu = menu_data->curr_menu;
 
-            if ((pad->down & HSD_BUTTON_Y) != 0 && menuData->currMenu->shortcuts != 0)
-                menuData->mode = MenuMode_Shortcut;
+            if ((pad->down & HSD_BUTTON_Y) != 0 && menu_data->curr_menu->shortcuts != 0)
+                menu_data->mode = MenuMode_Shortcut;
 
             // menu think
-            else if (currMenu->state == EMSTATE_FOCUS)
+            else if (curr_menu->state == EMSTATE_FOCUS)
             {
                 // check to run custom menu think function
-                EventMenu_MenuThink(gobj, currMenu);
+                EventMenu_MenuThink(gobj, curr_menu);
             }
 
             // popup think
-            else if (currMenu->state == EMSTATE_OPENPOP)
-                EventMenu_PopupThink(gobj, currMenu);
+            else if (curr_menu->state == EMSTATE_OPENPOP)
+                EventMenu_PopupThink(gobj, curr_menu);
         }
 
-        if (menuData->mode == MenuMode_Shortcut)
+        if (menu_data->mode == MenuMode_Shortcut)
         {
-            ShortcutList *shortcuts = menuData->currMenu->shortcuts;
+            ShortcutList *shortcuts = menu_data->curr_menu->shortcuts;
             if (shortcuts != 0)
             {
                 event_vars->hide_menu = 1;
@@ -152,14 +152,14 @@ void EventMenu_Update(GOBJ *gobj)
                             SFX_PlayCommon(2);
                         }
 
-                        menuData->mode = MenuMode_ShortcutWaitForRelease;
+                        menu_data->mode = MenuMode_ShortcutWaitForRelease;
                         break;
                     }
                 }
             }
         }
 
-        if (menuData->mode == MenuMode_ShortcutWaitForRelease)
+        if (menu_data->mode == MenuMode_ShortcutWaitForRelease)
         {
             if ((pad->held & SHORTCUT_BUTTONS) == 0)
                 exit_menu = 1;
@@ -169,17 +169,17 @@ void EventMenu_Update(GOBJ *gobj)
     if (enter_menu != 0)
     {
         // set state
-        menuData->mode = MenuMode_Paused;
+        menu_data->mode = MenuMode_Paused;
 
         // Create menu
-        EventMenu_CreateModel(gobj, currMenu);
-        EventMenu_CreateText(gobj, currMenu);
-        EventMenu_UpdateText(gobj, currMenu);
-        if (currMenu->state == EMSTATE_OPENPOP)
+        EventMenu_CreateModel(gobj, curr_menu);
+        EventMenu_CreateText(gobj, curr_menu);
+        EventMenu_UpdateText(gobj, curr_menu);
+        if (curr_menu->state == EMSTATE_OPENPOP)
         {
-            EventOption *currOption = &currMenu->options[currMenu->cursor];
-            EventMenu_CreatePopupModel(gobj, currMenu);
-            EventMenu_CreatePopupText(gobj, currMenu);
+            EventOption *currOption = &curr_menu->options[curr_menu->cursor];
+            EventMenu_CreatePopupModel(gobj, curr_menu);
+            EventMenu_CreatePopupText(gobj, curr_menu);
             EventMenu_UpdatePopupText(gobj, currOption);
         }
 
@@ -192,7 +192,7 @@ void EventMenu_Update(GOBJ *gobj)
 
     if (exit_menu != 0)
     {
-        menuData->mode = MenuMode_Normal;
+        menu_data->mode = MenuMode_Normal;
 
         // destroy menu
         EventMenu_DestroyMenu(gobj);
@@ -216,11 +216,11 @@ void EventMenu_TextGX(GOBJ *gobj, int pass)
         Text_GX(gobj, pass);
 }
 
-void EventMenu_MenuThink(GOBJ *gobj, EventMenu *currMenu) {
-    MenuData *menuData = gobj->userdata;
+void EventMenu_MenuThink(GOBJ *gobj, EventMenu *curr_menu) {
+    MenuData *menu_data = gobj->userdata;
 
     // get player who paused
-    u8 pauser = menuData->controller_index;
+    u8 pauser = menu_data->controller_index;
     // get their  inputs
     HSD_Pad *pad = PadGet(pauser, PADGET_MASTER);
     int inputs_rapid = pad->rapidFire;
@@ -235,10 +235,10 @@ void EventMenu_MenuThink(GOBJ *gobj, EventMenu *currMenu) {
 
     // get menu variables
     int isChanged = 0;
-    s32 cursor = currMenu->cursor;
-    s32 scroll = currMenu->scroll;
-    EventOption *currOption = &currMenu->options[cursor + scroll];
-    s32 option_num = currMenu->option_num;
+    s32 cursor = curr_menu->cursor;
+    s32 scroll = curr_menu->scroll;
+    EventOption *currOption = &curr_menu->options[cursor + scroll];
+    s32 option_num = curr_menu->option_num;
     s32 cursor_min = 0;
     s32 cursor_max = ((option_num > MENU_MAXOPTION) ? MENU_MAXOPTION : option_num) - 1;
 
@@ -253,7 +253,7 @@ void EventMenu_MenuThink(GOBJ *gobj, EventMenu *currMenu) {
         int cursor_next = 0; // how much to move the cursor by
         for (int i = 1; (cursor + scroll + i) < option_num; i++) {
             // option exists, check if it's enabled
-            if (currMenu->options[cursor + scroll + i].disable == 0) {
+            if (curr_menu->options[cursor + scroll + i].disable == 0) {
                 cursor_next = i;
                 break;
             }
@@ -270,12 +270,12 @@ void EventMenu_MenuThink(GOBJ *gobj, EventMenu *currMenu) {
             }
         }
 
-        if (currMenu->cursor != cursor || currMenu->scroll != scroll) {
+        if (curr_menu->cursor != cursor || curr_menu->scroll != scroll) {
             isChanged = 1;
 
             // update cursor
-            currMenu->cursor = cursor;
-            currMenu->scroll = scroll;
+            curr_menu->cursor = cursor;
+            curr_menu->scroll = scroll;
 
             // also play sfx
             SFX_PlayCommon(2);
@@ -288,7 +288,7 @@ void EventMenu_MenuThink(GOBJ *gobj, EventMenu *currMenu) {
         int cursor_next = 0; // how much to move the cursor by
         for (int i = 1; (cursor + scroll - i) >= 0; i++) {
             // option exists, check if it's enabled
-            if (currMenu->options[cursor + scroll - i].disable == 0) {
+            if (curr_menu->options[cursor + scroll - i].disable == 0) {
                 cursor_next = i;
                 break;
             }
@@ -305,12 +305,12 @@ void EventMenu_MenuThink(GOBJ *gobj, EventMenu *currMenu) {
             }
         }
 
-        if (currMenu->cursor != cursor || currMenu->scroll != scroll) {
+        if (curr_menu->cursor != cursor || curr_menu->scroll != scroll) {
             isChanged = 1;
 
             // update cursor
-            currMenu->cursor = cursor;
-            currMenu->scroll = scroll;
+            curr_menu->cursor = cursor;
+            curr_menu->scroll = scroll;
 
             // also play sfx
             SFX_PlayCommon(2);
@@ -372,20 +372,20 @@ void EventMenu_MenuThink(GOBJ *gobj, EventMenu *currMenu) {
         if ((currOption->kind == OPTKIND_MENU))
         {
             // access this menu
-            currMenu->state = EMSTATE_OPENSUB;
+            curr_menu->state = EMSTATE_OPENSUB;
 
-            // update currMenu
-            EventMenu *nextMenu = currMenu->options[cursor + scroll].menu;
-            nextMenu->prev = currMenu;
+            // update curr_menu
+            EventMenu *nextMenu = curr_menu->options[cursor + scroll].menu;
+            nextMenu->prev = curr_menu;
             nextMenu->state = EMSTATE_FOCUS;
-            currMenu = nextMenu;
-            menuData->currMenu = currMenu;
+            curr_menu = nextMenu;
+            menu_data->curr_menu = curr_menu;
 
             // recreate everything
             EventMenu_DestroyMenu(gobj);
-            EventMenu_CreateModel(gobj, currMenu);
-            EventMenu_CreateText(gobj, currMenu);
-            EventMenu_UpdateText(gobj, currMenu);
+            EventMenu_CreateModel(gobj, curr_menu);
+            EventMenu_CreateText(gobj, curr_menu);
+            EventMenu_UpdateText(gobj, curr_menu);
 
             // also play sfx
             SFX_PlayCommon(1);
@@ -396,7 +396,7 @@ void EventMenu_MenuThink(GOBJ *gobj, EventMenu *currMenu) {
         if ((currOption->kind == OPTKIND_STRING) || (currOption->kind == OPTKIND_INT))
         {
             // access this menu
-            currMenu->state = EMSTATE_OPENPOP;
+            curr_menu->state = EMSTATE_OPENPOP;
 
             // init cursor and scroll value
             s32 cursor = 0;
@@ -416,12 +416,12 @@ void EventMenu_MenuThink(GOBJ *gobj, EventMenu *currMenu) {
             }
 
             // update cursor and scroll
-            menuData->popup_cursor = cursor;
-            menuData->popup_scroll = scroll;
+            menu_data->popup_cursor = cursor;
+            menu_data->popup_scroll = scroll;
 
             // create popup menu and update
-            EventMenu_CreatePopupModel(gobj, currMenu);
-            EventMenu_CreatePopupText(gobj, currMenu);
+            EventMenu_CreatePopupModel(gobj, curr_menu);
+            EventMenu_CreatePopupText(gobj, curr_menu);
             EventMenu_UpdatePopupText(gobj, currOption);
 
             // also play sfx
@@ -436,7 +436,7 @@ void EventMenu_MenuThink(GOBJ *gobj, EventMenu *currMenu) {
             currOption->OnSelect(gobj);
 
             // update text
-            EventMenu_UpdateText(gobj, currMenu);
+            EventMenu_UpdateText(gobj, curr_menu);
 
             // also play sfx
             SFX_PlayCommon(1);
@@ -446,30 +446,30 @@ void EventMenu_MenuThink(GOBJ *gobj, EventMenu *currMenu) {
     else if (inputs_rapid & HSD_BUTTON_B)
     {
         // check if a prev menu exists
-        EventMenu *prevMenu = currMenu->prev;
+        EventMenu *prevMenu = curr_menu->prev;
         if (prevMenu != 0)
         {
 
             // clear previous menu
-            EventMenu *prevMenu = currMenu->prev;
-            currMenu->prev = 0;
+            EventMenu *prevMenu = curr_menu->prev;
+            curr_menu->prev = 0;
 
             // reset this menu's cursor
-            currMenu->scroll = 0;
-            currMenu->cursor = 0;
+            curr_menu->scroll = 0;
+            curr_menu->cursor = 0;
 
-            // update currMenu
-            currMenu = prevMenu;
-            menuData->currMenu = currMenu;
+            // update curr_menu
+            curr_menu = prevMenu;
+            menu_data->curr_menu = curr_menu;
 
             // close this menu
-            currMenu->state = EMSTATE_FOCUS;
+            curr_menu->state = EMSTATE_FOCUS;
 
             // recreate everything
             EventMenu_DestroyMenu(gobj);
-            EventMenu_CreateModel(gobj, currMenu);
-            EventMenu_CreateText(gobj, currMenu);
-            EventMenu_UpdateText(gobj, currMenu);
+            EventMenu_CreateModel(gobj, curr_menu);
+            EventMenu_CreateText(gobj, curr_menu);
+            EventMenu_UpdateText(gobj, curr_menu);
 
             // also play sfx
             SFX_PlayCommon(0);
@@ -481,7 +481,7 @@ void EventMenu_MenuThink(GOBJ *gobj, EventMenu *currMenu) {
         {
             SFX_PlayCommon(0);
 
-            menuData->isPaused = 0;
+            menu_data->isPaused = 0;
 
             // destroy menu
             EventMenu_DestroyMenu(gobj);
@@ -498,17 +498,17 @@ void EventMenu_MenuThink(GOBJ *gobj, EventMenu *currMenu) {
     if (isChanged != 0)
     {
         // update menu
-        EventMenu_UpdateText(gobj, currMenu);
+        EventMenu_UpdateText(gobj, curr_menu);
     }
 }
 
-void EventMenu_PopupThink(GOBJ *gobj, EventMenu *currMenu)
+void EventMenu_PopupThink(GOBJ *gobj, EventMenu *curr_menu)
 {
 
-    MenuData *menuData = gobj->userdata;
+    MenuData *menu_data = gobj->userdata;
 
     // get player who paused
-    u8 pauser = menuData->controller_index; // get their  inputs
+    u8 pauser = menu_data->controller_index; // get their  inputs
     HSD_Pad *pad = PadGet(pauser, PADGET_MASTER);
     int inputs_rapid = pad->rapidFire;
     int inputs_held = pad->held;
@@ -518,9 +518,9 @@ void EventMenu_PopupThink(GOBJ *gobj, EventMenu *currMenu)
 
     // get option variables
     int isChanged = 0;
-    s32 cursor = menuData->popup_cursor;
-    s32 scroll = menuData->popup_scroll;
-    EventOption *currOption = &currMenu->options[currMenu->cursor + currMenu->scroll];
+    s32 cursor = menu_data->popup_cursor;
+    s32 scroll = menu_data->popup_scroll;
+    EventOption *currOption = &curr_menu->options[curr_menu->cursor + curr_menu->scroll];
     s32 value_num = currOption->value_num;
     s32 cursor_min = 0;
     s32 cursor_max = value_num;
@@ -540,7 +540,7 @@ void EventMenu_PopupThink(GOBJ *gobj, EventMenu *currMenu)
             isChanged = 1;
 
             // update cursor
-            menuData->popup_cursor = cursor;
+            menu_data->popup_cursor = cursor;
 
             // also play sfx
             SFX_PlayCommon(2);
@@ -557,8 +557,8 @@ void EventMenu_PopupThink(GOBJ *gobj, EventMenu *currMenu)
                 cursor--;
 
                 // update cursor
-                menuData->popup_cursor = cursor;
-                menuData->popup_scroll = scroll;
+                menu_data->popup_cursor = cursor;
+                menu_data->popup_scroll = scroll;
 
                 isChanged = 1;
 
@@ -578,7 +578,7 @@ void EventMenu_PopupThink(GOBJ *gobj, EventMenu *currMenu)
             isChanged = 1;
 
             // update cursor
-            menuData->popup_cursor = cursor;
+            menu_data->popup_cursor = cursor;
 
             // also play sfx
             SFX_PlayCommon(2);
@@ -595,8 +595,8 @@ void EventMenu_PopupThink(GOBJ *gobj, EventMenu *currMenu)
                 cursor++;
 
                 // update cursor
-                menuData->popup_cursor = cursor;
-                menuData->popup_scroll = scroll;
+                menu_data->popup_cursor = cursor;
+                menu_data->popup_scroll = scroll;
 
                 isChanged = 1;
 
@@ -621,7 +621,7 @@ void EventMenu_PopupThink(GOBJ *gobj, EventMenu *currMenu)
         EventMenu_DestroyPopup(gobj);
 
         // update menu
-        EventMenu_UpdateText(gobj, currMenu);
+        EventMenu_UpdateText(gobj, curr_menu);
 
         // play sfx
         SFX_PlayCommon(1);
@@ -633,7 +633,7 @@ void EventMenu_PopupThink(GOBJ *gobj, EventMenu *currMenu)
         EventMenu_DestroyPopup(gobj);
 
         // update menu
-        EventMenu_UpdateText(gobj, currMenu);
+        EventMenu_UpdateText(gobj, curr_menu);
 
         // play sfx
         SFX_PlayCommon(0);
@@ -650,7 +650,7 @@ void EventMenu_PopupThink(GOBJ *gobj, EventMenu *currMenu)
 void EventMenu_CreateModel(GOBJ *gobj, EventMenu *menu)
 {
 
-    MenuData *menuData = gobj->userdata;
+    MenuData *menu_data = gobj->userdata;
 
     // create options background
     evMenu *menuAssets = event_vars->menu_assets;
@@ -694,7 +694,7 @@ void EventMenu_CreateModel(GOBJ *gobj, EventMenu *menu)
         //GXColor border_color = ROWBOX_COLOR;
         //jobj_border->dobj->next->mobj->mat->diffuse = border_color;
         // store pointer
-        menuData->row_joints[i][0] = jobj_border;
+        menu_data->row_joints[i][0] = jobj_border;
 
         // create an arrow jobj
         JOBJ *jobj_arrow = JOBJ_LoadJoint(menuAssets->arrow);
@@ -713,7 +713,7 @@ void EventMenu_CreateModel(GOBJ *gobj, EventMenu *menu)
 
         JOBJ_SetFlags(jobj_arrow, JOBJ_HIDDEN);
         // store pointer
-        menuData->row_joints[i][1] = jobj_arrow;
+        menu_data->row_joints[i][1] = jobj_arrow;
     }
 
     // create a highlight jobj
@@ -740,10 +740,10 @@ void EventMenu_CreateModel(GOBJ *gobj, EventMenu *menu)
     GXColor highlight = MENUHIGHLIGHT_COLOR;
     jobj_highlight->dobj->next->mobj->mat->alpha = 0.6;
     jobj_highlight->dobj->next->mobj->mat->diffuse = highlight;
-    menuData->highlight_menu = jobj_highlight;
+    menu_data->highlight_menu = jobj_highlight;
 
     // check to create scroll bar
-    if (menuData->currMenu->option_num > MENU_MAXOPTION)
+    if (menu_data->curr_menu->option_num > MENU_MAXOPTION)
     {
         // create scroll bar
         JOBJ *scroll_jobj = JOBJ_LoadJoint(menuAssets->scroll);
@@ -758,14 +758,14 @@ void EventMenu_CreateModel(GOBJ *gobj, EventMenu *menu)
         scroll_jobj->trans.X = MENUSCROLL_X;
         scroll_jobj->trans.Y = MENUSCROLL_Y;
         scroll_jobj->trans.Z = MENUSCROLL_Z;
-        menuData->scroll_top = corners[0];
-        menuData->scroll_bot = corners[1];
+        menu_data->scroll_top = corners[0];
+        menu_data->scroll_bot = corners[1];
         GXColor highlight = MENUSCROLL_COLOR;
         scroll_jobj->dobj->next->mobj->mat->alpha = 0.6;
         scroll_jobj->dobj->next->mobj->mat->diffuse = highlight;
 
         // calculate scrollbar size
-        int max_steps = menuData->currMenu->option_num - MENU_MAXOPTION;
+        int max_steps = menu_data->curr_menu->option_num - MENU_MAXOPTION;
         float botPos = MENUSCROLL_MAXLENGTH + (max_steps * MENUSCROLL_PEROPTION);
         if (botPos > MENUSCROLL_MINLENGTH)
             botPos = MENUSCROLL_MINLENGTH;
@@ -775,8 +775,8 @@ void EventMenu_CreateModel(GOBJ *gobj, EventMenu *menu)
     }
     else
     {
-        menuData->scroll_bot = 0;
-        menuData->scroll_top = 0;
+        menu_data->scroll_bot = 0;
+        menu_data->scroll_top = 0;
     }
 }
 
@@ -784,29 +784,29 @@ void EventMenu_CreateText(GOBJ *gobj, EventMenu *menu)
 {
 
     // Get event info
-    MenuData *menuData = gobj->userdata;
+    MenuData *menu_data = gobj->userdata;
     Text *text;
     int subtext;
-    int canvasIndex = menuData->canvas_menu;
+    int canvasIndex = menu_data->canvas_menu;
     s32 cursor = menu->cursor;
 
     // free text if it exists
-    if (menuData->text_name != 0)
+    if (menu_data->text_name != 0)
     {
         // free text
-        Text_Destroy(menuData->text_name);
-        menuData->text_name = 0;
-        Text_Destroy(menuData->text_value);
-        menuData->text_value = 0;
-        Text_Destroy(menuData->text_title);
-        menuData->text_title = 0;
-        Text_Destroy(menuData->text_desc);
-        menuData->text_desc = 0;
+        Text_Destroy(menu_data->text_name);
+        menu_data->text_name = 0;
+        Text_Destroy(menu_data->text_value);
+        menu_data->text_value = 0;
+        Text_Destroy(menu_data->text_title);
+        menu_data->text_title = 0;
+        Text_Destroy(menu_data->text_desc);
+        menu_data->text_desc = 0;
     }
-    if (menuData->text_popup != 0)
+    if (menu_data->text_popup != 0)
     {
-        Text_Destroy(menuData->text_popup);
-        menuData->text_popup = 0;
+        Text_Destroy(menu_data->text_popup);
+        menu_data->text_popup = 0;
     }
 
     /*******************
@@ -815,7 +815,7 @@ void EventMenu_CreateText(GOBJ *gobj, EventMenu *menu)
 
     text = Text_CreateText(2, canvasIndex);
     text->gobj->gx_cb = EventMenu_TextGX;
-    menuData->text_title = text;
+    menu_data->text_title = text;
     // enable align and kerning
     text->align = 0;
     text->kerning = 1;
@@ -838,7 +838,7 @@ void EventMenu_CreateText(GOBJ *gobj, EventMenu *menu)
 
     text = Text_CreateText(2, canvasIndex);
     text->gobj->gx_cb = EventMenu_TextGX;
-    menuData->text_desc = text;
+    menu_data->text_desc = text;
 
     /*******************
     *** Create Names ***
@@ -846,7 +846,7 @@ void EventMenu_CreateText(GOBJ *gobj, EventMenu *menu)
 
     text = Text_CreateText(2, canvasIndex);
     text->gobj->gx_cb = EventMenu_TextGX;
-    menuData->text_name = text;
+    menu_data->text_name = text;
     // enable align and kerning
     text->align = 0;
     text->kerning = 1;
@@ -876,7 +876,7 @@ void EventMenu_CreateText(GOBJ *gobj, EventMenu *menu)
 
     text = Text_CreateText(2, canvasIndex);
     text->gobj->gx_cb = EventMenu_TextGX;
-    menuData->text_value = text;
+    menu_data->text_value = text;
     // enable align and kerning
     text->align = 1;
     text->kerning = 1;
@@ -901,7 +901,7 @@ void EventMenu_UpdateText(GOBJ *gobj, EventMenu *menu)
 {
 
     // Get event info
-    MenuData *menuData = gobj->userdata;
+    MenuData *menu_data = gobj->userdata;
     s32 cursor = menu->cursor;
     s32 scroll = menu->scroll;
     s32 option_num = menu->option_num;
@@ -911,14 +911,14 @@ void EventMenu_UpdateText(GOBJ *gobj, EventMenu *menu)
 
     // Update Title
 
-    text = menuData->text_title;
+    text = menu_data->text_title;
     Text_SetText(text, 0, menu->name);
 
     // Update Description
-    Text_Destroy(menuData->text_desc); // i think its best to recreate it...
-    text = Text_CreateText(2, menuData->canvas_menu);
+    Text_Destroy(menu_data->text_desc); // i think its best to recreate it...
+    text = Text_CreateText(2, menu_data->canvas_menu);
     text->gobj->gx_cb = EventMenu_TextGX;
-    menuData->text_desc = text;
+    menu_data->text_desc = text;
     EventOption *currOption = &menu->options[menu->cursor + menu->scroll];
 
 #define DESC_TXTSIZEX 5
@@ -995,7 +995,7 @@ void EventMenu_UpdateText(GOBJ *gobj, EventMenu *menu)
     */
 
     // Output all options
-    text = menuData->text_name;
+    text = menu_data->text_name;
     for (int i = 0; i < option_num; i++)
     {
         // get this option
@@ -1030,7 +1030,7 @@ void EventMenu_UpdateText(GOBJ *gobj, EventMenu *menu)
     */
 
     // Output all values
-    text = menuData->text_value;
+    text = menu_data->text_value;
     for (int i = 0; i < option_num; i++)
     {
         // get this option
@@ -1038,8 +1038,8 @@ void EventMenu_UpdateText(GOBJ *gobj, EventMenu *menu)
         int optionVal = currOption->val;
 
         // hide row models
-        JOBJ_SetFlags(menuData->row_joints[i][0], JOBJ_HIDDEN);
-        JOBJ_SetFlags(menuData->row_joints[i][1], JOBJ_HIDDEN);
+        JOBJ_SetFlags(menu_data->row_joints[i][0], JOBJ_HIDDEN);
+        JOBJ_SetFlags(menu_data->row_joints[i][1], JOBJ_HIDDEN);
 
         // if this option has string values
         if (currOption->kind == OPTKIND_STRING)
@@ -1048,7 +1048,7 @@ void EventMenu_UpdateText(GOBJ *gobj, EventMenu *menu)
             Text_SetText(text, i, currOption->values[optionVal]);
 
             // show box
-            JOBJ_ClearFlags(menuData->row_joints[i][0], JOBJ_HIDDEN);
+            JOBJ_ClearFlags(menu_data->row_joints[i][0], JOBJ_HIDDEN);
         }
 
         // if this option has int values
@@ -1058,7 +1058,7 @@ void EventMenu_UpdateText(GOBJ *gobj, EventMenu *menu)
             Text_SetText(text, i, currOption->values, optionVal);
 
             // show box
-            JOBJ_ClearFlags(menuData->row_joints[i][0], JOBJ_HIDDEN);
+            JOBJ_ClearFlags(menu_data->row_joints[i][0], JOBJ_HIDDEN);
         }
 
         // if this option is a menu or function
@@ -1067,7 +1067,7 @@ void EventMenu_UpdateText(GOBJ *gobj, EventMenu *menu)
             Text_SetText(text, i, &nullString);
 
             // show arrow
-            //JOBJ_ClearFlags(menuData->row_joints[i][1], JOBJ_HIDDEN);
+            //JOBJ_ClearFlags(menu_data->row_joints[i][1], JOBJ_HIDDEN);
         }
 
         // output color
@@ -1090,21 +1090,21 @@ void EventMenu_UpdateText(GOBJ *gobj, EventMenu *menu)
     }
 
     // update cursor position
-    JOBJ *highlight_joint = menuData->highlight_menu;
+    JOBJ *highlight_joint = menu_data->highlight_menu;
     highlight_joint->trans.Y = cursor * MENUHIGHLIGHT_YOFFSET;
 
     // update scrollbar position
-    if (menuData->scroll_top != 0)
+    if (menu_data->scroll_top != 0)
     {
-        float curr_steps = menuData->currMenu->scroll;
+        float curr_steps = menu_data->curr_menu->scroll;
         float max_steps;
-        if (menuData->currMenu->option_num < MENU_MAXOPTION)
+        if (menu_data->curr_menu->option_num < MENU_MAXOPTION)
             max_steps = 0;
         else
-            max_steps = menuData->currMenu->option_num - MENU_MAXOPTION;
+            max_steps = menu_data->curr_menu->option_num - MENU_MAXOPTION;
 
         // scrollTop = -1 * ((curr_steps/max_steps) * (botY - -10))
-        menuData->scroll_top->trans.Y = -1 * (curr_steps / max_steps) * (menuData->scroll_bot->trans.Y - MENUSCROLL_MAXLENGTH);
+        menu_data->scroll_top->trans.Y = -1 * (curr_steps / max_steps) * (menu_data->scroll_bot->trans.Y - MENUSCROLL_MAXLENGTH);
     }
 
     // update jobj
@@ -1113,36 +1113,36 @@ void EventMenu_UpdateText(GOBJ *gobj, EventMenu *menu)
 
 void EventMenu_DestroyMenu(GOBJ *gobj)
 {
-    MenuData *menuData = gobj->userdata; // userdata
+    MenuData *menu_data = gobj->userdata; // userdata
 
     // remove
-    Text_Destroy(menuData->text_name);
-    menuData->text_name = 0;
+    Text_Destroy(menu_data->text_name);
+    menu_data->text_name = 0;
     // remove
-    Text_Destroy(menuData->text_value);
-    menuData->text_value = 0;
+    Text_Destroy(menu_data->text_value);
+    menu_data->text_value = 0;
     // remove
-    Text_Destroy(menuData->text_title);
-    menuData->text_title = 0;
+    Text_Destroy(menu_data->text_title);
+    menu_data->text_title = 0;
     // remove
-    Text_Destroy(menuData->text_desc);
-    menuData->text_desc = 0;
+    Text_Destroy(menu_data->text_desc);
+    menu_data->text_desc = 0;
 
     // if popup box exists
-    if (menuData->text_popup != 0)
+    if (menu_data->text_popup != 0)
         EventMenu_DestroyPopup(gobj);
 
     // if custom menu gobj exists
-    if (menuData->custom_gobj != 0)
+    if (menu_data->custom_gobj != 0)
     {
         // run on destroy function
-        if (menuData->custom_gobj_destroy != 0)
-            menuData->custom_gobj_destroy(menuData->custom_gobj);
+        if (menu_data->custom_gobj_destroy != 0)
+            menu_data->custom_gobj_destroy(menu_data->custom_gobj);
 
         // null pointers
-        menuData->custom_gobj = 0;
-        menuData->custom_gobj_destroy = 0;
-        menuData->custom_gobj_think = 0;
+        menu_data->custom_gobj = 0;
+        menu_data->custom_gobj_destroy = 0;
+        menu_data->custom_gobj_think = 0;
     }
 
     // set menu as visible
@@ -1156,7 +1156,7 @@ void EventMenu_DestroyMenu(GOBJ *gobj)
 void EventMenu_CreatePopupModel(GOBJ *gobj, EventMenu *menu)
 {
     // init variables
-    MenuData *menuData = gobj->userdata; // userdata
+    MenuData *menu_data = gobj->userdata; // userdata
     s32 cursor = menu->cursor;
     EventOption *option = &menu->options[cursor];
 
@@ -1198,7 +1198,7 @@ void EventMenu_CreatePopupModel(GOBJ *gobj, EventMenu *menu)
     // add gx link
     GObj_AddGXLink(popup_gobj, EventMenu_MenuGX, GXLINK_POPUPMODEL, GXPRI_POPUPMODEL);
     // save pointer
-    menuData->popup = popup_gobj;
+    menu_data->popup = popup_gobj;
 
     // adjust scrollbar scale
 
@@ -1229,17 +1229,17 @@ void EventMenu_CreatePopupModel(GOBJ *gobj, EventMenu *menu)
     jobj_highlight->dobj->next->mobj->mat->alpha = 0.6;
     jobj_highlight->dobj->next->mobj->mat->diffuse = highlight;
 
-    menuData->highlight_popup = jobj_highlight;
+    menu_data->highlight_popup = jobj_highlight;
 }
 
 void EventMenu_CreatePopupText(GOBJ *gobj, EventMenu *menu)
 {
     // init variables
-    MenuData *menuData = gobj->userdata;
+    MenuData *menu_data = gobj->userdata;
     s32 cursor = menu->cursor;
     EventOption *option = &menu->options[cursor];
     int subtext;
-    int canvasIndex = menuData->canvas_popup;
+    int canvasIndex = menu_data->canvas_popup;
     s32 value_num = option->value_num;
     if (value_num > MENU_POPMAXOPTION)
         value_num = MENU_POPMAXOPTION;
@@ -1250,7 +1250,7 @@ void EventMenu_CreatePopupText(GOBJ *gobj, EventMenu *menu)
 
     Text *text = Text_CreateText(2, canvasIndex);
     text->gobj->gx_cb = EventMenu_TextGX;
-    menuData->text_popup = text;
+    menu_data->text_popup = text;
     // enable align and kerning
     text->align = 1;
     text->kerning = 1;
@@ -1275,9 +1275,9 @@ void EventMenu_CreatePopupText(GOBJ *gobj, EventMenu *menu)
 void EventMenu_UpdatePopupText(GOBJ *gobj, EventOption *option)
 {
     // init variables
-    MenuData *menuData = gobj->userdata; // userdata
-    s32 cursor = menuData->popup_cursor;
-    s32 scroll = menuData->popup_scroll;
+    MenuData *menu_data = gobj->userdata; // userdata
+    s32 cursor = menu_data->popup_cursor;
+    s32 scroll = menu_data->popup_scroll;
     s32 value_num = option->value_num;
     if (value_num > MENU_POPMAXOPTION)
         value_num = MENU_POPMAXOPTION;
@@ -1286,7 +1286,7 @@ void EventMenu_UpdatePopupText(GOBJ *gobj, EventOption *option)
     // Update Values //
     ///////////////////
 
-    Text *text = menuData->text_popup;
+    Text *text = menu_data->text_popup;
 
     // update int list
     if (option->kind == OPTKIND_INT)
@@ -1311,24 +1311,23 @@ void EventMenu_UpdatePopupText(GOBJ *gobj, EventOption *option)
     }
 
     // update cursor position
-    JOBJ *highlight_joint = menuData->highlight_popup;
+    JOBJ *highlight_joint = menu_data->highlight_popup;
     highlight_joint->trans.Y = cursor * POPUPHIGHLIGHT_YOFFSET;
     JOBJ_SetMtxDirtySub(highlight_joint);
 }
 
 void EventMenu_DestroyPopup(GOBJ *gobj)
 {
-    MenuData *menuData = gobj->userdata; // userdata
+    MenuData *menu_data = gobj->userdata; // userdata
 
     // remove text
-    Text_Destroy(menuData->text_popup);
-    menuData->text_popup = 0;
+    Text_Destroy(menu_data->text_popup);
+    menu_data->text_popup = 0;
 
-    // destory gobj
-    GObj_Destroy(menuData->popup);
-    menuData->popup = 0;
+    // destroy gobj
+    GObj_Destroy(menu_data->popup);
+    menu_data->popup = 0;
 
     // also change the menus state
-    EventMenu *currMenu = menuData->currMenu;
-    currMenu->state = EMSTATE_FOCUS;
+    menu_data->curr_menu->state = EMSTATE_FOCUS;
 }

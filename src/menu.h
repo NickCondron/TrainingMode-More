@@ -64,7 +64,7 @@ typedef enum MenuMode {
 } MenuMode;
 typedef struct MenuData
 {
-    EventMenu *currMenu;
+    EventMenu *curr_menu;
     u16 canvas_menu;
     u16 canvas_popup;
     u8 mode;
