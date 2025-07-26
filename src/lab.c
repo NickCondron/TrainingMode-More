@@ -77,10 +77,6 @@ RecInputs *Lab_GetAlteringInputs(void) {
 }
 
 void Lab_ChangeAlterInputsFrame(GOBJ *menu_gobj, int value) {
-    Lab_SetAlterInputsMenuOptions(menu_gobj);
-}
-
-int Lab_SetAlterInputsMenuOptions(GOBJ *menu_gobj) {
     RecInputData *rec = Lab_GetAlteringRecording();
     int frame = LabOptions_AlterInputs[OPTINPUT_FRAME].val;
     if (rec->num < frame)
@@ -99,7 +95,6 @@ int Lab_SetAlterInputsMenuOptions(GOBJ *menu_gobj) {
     LabOptions_AlterInputs[OPTINPUT_L].val        = inputs->btn_L;
     LabOptions_AlterInputs[OPTINPUT_R].val        = inputs->btn_R;
     LabOptions_AlterInputs[OPTINPUT_Z].val        = inputs->btn_Z;
-    return 1;
 }
 
 void Lab_ChangeInputs(GOBJ *menu_gobj, int value) {
@@ -3090,9 +3085,6 @@ void Lab_SelectCustomTDI(GOBJ *menu_gobj)
     LabData *event_data = event_gobj->userdata;
     Arch_LabData *LabAssets = stc_lab_data;
 
-    // set menu state to wait
-    //curr_menu->state = EMSTATE_WAIT;
-
     // create bg gobj
     GOBJ *tdi_gobj = GObj_Create(0, 0, 0);
     TDIData *userdata = calloc(sizeof(TDIData));
@@ -4557,11 +4549,9 @@ void Record_MemcardLoad(int slot, int file_no)
             // enter recording menu
             MenuData *menu_data = event_vars->menu_gobj->userdata;
             EventMenu *curr_menu = menu_data->curr_menu;
-            curr_menu->state = EMSTATE_OPENSUB;
             // update curr_menu
             EventMenu *next_menu = curr_menu->options[2].menu;
             next_menu->prev = curr_menu;
-            next_menu->state = EMSTATE_FOCUS;
             curr_menu = next_menu;
             menu_data->curr_menu = curr_menu;
 
@@ -5057,7 +5047,6 @@ int Export_SelCardThink(GOBJ *export_gobj)
         export_data->is_inserted[i] = is_inserted;
     }
 
-    // if left
     if ((inputs & HSD_BUTTON_LEFT) || (inputs & HSD_BUTTON_DPAD_LEFT))
     {
         if (export_data->slot > 0)
@@ -5067,7 +5056,6 @@ int Export_SelCardThink(GOBJ *export_gobj)
         }
     }
 
-    // if right
     if ((inputs & HSD_BUTTON_RIGHT) || (inputs & HSD_BUTTON_DPAD_RIGHT))
     {
         if (export_data->slot < 1)
@@ -5078,7 +5066,6 @@ int Export_SelCardThink(GOBJ *export_gobj)
     }
 
     int cursor = export_data->slot;
-    // if press A,
     if ((inputs & HSD_BUTTON_A) || (inputs & HSD_BUTTON_START))
     {
         // ensure it can be saved
@@ -5098,9 +5085,7 @@ int Export_SelCardThink(GOBJ *export_gobj)
         else
             SFX_PlayCommon(3);
     }
-
-    // if press B,
-    if ((inputs & HSD_BUTTON_B))
+    else if (inputs & HSD_BUTTON_B)
     {
         Export_Destroy(export_gobj);
 

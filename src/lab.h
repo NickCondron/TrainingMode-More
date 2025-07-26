@@ -867,10 +867,9 @@ static EventOption LabOptions_Main[OPTLAB_COUNT] = {
         .desc = "Configure stage behavior.",
     },
     {
-        .kind = OPTKIND_FUNC,
+        .kind = OPTKIND_INFO,
         .name = "Help",
         .desc = "D-Pad Left - Load State\nD-Pad Right - Save State\nD-Pad Down - Move CPU\nHold R in the menu for turbo.",
-        .OnChange = Lab_Exit,
     },
     {
         .kind = OPTKIND_FUNC,
@@ -3016,7 +3015,6 @@ static EventMenu LabMenu_AlterInputs = {
     .option_num = sizeof(LabOptions_AlterInputs) / sizeof(EventOption),
     .options = &LabOptions_AlterInputs,
     .shortcuts = &Lab_ShortcutList,
-    .menu_think = Lab_SetAlterInputsMenuOptions,
 };
 
 // OVERLAY MENU --------------------------------------------------------------

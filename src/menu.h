@@ -3,6 +3,7 @@
 
 #define MENU_MAXOPTION 9
 #define MENU_POPMAXOPTION 5
+#define SHORTCUT_BUTTONS (HSD_BUTTON_A | HSD_BUTTON_B | HSD_BUTTON_X | HSD_TRIGGER_Z)
 
 // Custom File Structs
 typedef struct evMenu
@@ -49,18 +50,15 @@ struct EventMenu
     char *name;                    // name of this menu
     u8 option_num;                 // number of options this menu contains
     u8 scroll;                     //
-    u8 state;                      // bool used to know if this menu is focused
     u8 cursor;                     // index of the option currently selected
     EventOption *options;          // pointer to all of this menu's options
     EventMenu *prev;               // pointer to previous menu, used at runtime
-    int (*menu_think)(GOBJ *menu); // function that runs every frame.
     ShortcutList *shortcuts;       // pointer to shortcuts when shortcut mode is entered on this menu
 };
 typedef enum MenuMode {
     MenuMode_Normal,
     MenuMode_Paused,
     MenuMode_Shortcut,
-    MenuMode_ShortcutWaitForRelease,
 } MenuMode;
 typedef struct MenuData
 {
@@ -71,15 +69,10 @@ typedef struct MenuData
     u8 controller_index; // index of the controller who paused
     Text *text_name;
     Text *text_value;
-    Text *text_popup;
     Text *text_title;
     Text *text_desc;
-    u16 popup_cursor;
-    u16 popup_scroll;
-    GOBJ *popup;
     JOBJ *row_joints[MENU_MAXOPTION][2]; // pointers to row jobjs
     JOBJ *highlight_menu;                // pointer to the highlight jobj
-    JOBJ *highlight_popup;               // pointer to the highlight jobj
     JOBJ *scroll_top;
     JOBJ *scroll_bot;
     GOBJ *custom_gobj;                               // onSelect gobj
@@ -98,16 +91,8 @@ enum option_kind {
     OPTKIND_MENU,
     OPTKIND_STRING,
     OPTKIND_INT,
-    OPTKIND_FLOAT,
     OPTKIND_FUNC,
-};
-
-// EventMenu state definitions
-enum event_menu_state {
-    EMSTATE_FOCUS,
-    EMSTATE_OPENSUB,
-    EMSTATE_OPENPOP,
-    EMSTATE_WAIT, // pauses menu logic, used for when a custom window is being shown
+    OPTKIND_INFO,
 };
 
 // GX Link args
@@ -144,6 +129,12 @@ enum event_menu_state {
 #define MENU_DESCXPOS -21.5
 #define MENU_DESCYPOS 12
 #define MENU_DESCSCALE 1
+#define MENU_DESCTXTSIZEX 5
+#define MENU_DESCTXTSIZEY 5
+#define MENU_DESCTXTASPECT 885
+#define MENU_DESCLINEMAX 4
+#define MENU_DESCCHARMAX 100
+#define MENU_DESCYOFFSET 30
 // menu option name
 #define MENU_OPTIONNAMEXPOS -430
 #define MENU_OPTIONNAMEYPOS -230
@@ -194,31 +185,3 @@ enum event_menu_state {
 #define TICKBOX_SCALE 1.8
 #define TICKBOX_X 11.7
 #define TICKBOX_Y 11.7
-
-// popup model
-#define POPUP_WIDTH ROWBOX_WIDTH
-#define POPUP_HEIGHT 19
-#define POPUP_SCALE 1
-#define POPUP_X 12.5
-#define POPUP_Y 8.3
-#define POPUP_Z 0.01
-#define POPUP_YOFFSET -2.5
-// popup text object
-#define POPUP_CANVASSCALE 0.05
-#define POPUP_TEXTSCALE 1
-#define POPUP_TEXTZ 0.01
-// popup text
-#define POPUP_OPTIONVALXPOS 250
-#define POPUP_OPTIONVALYPOS -280
-#define POPUP_TEXTYOFFSET 50
-// popup highlight
-#define POPUPHIGHLIGHT_HEIGHT ROWBOX_HEIGHT
-#define POPUPHIGHLIGHT_WIDTH (POPUP_WIDTH * 0.785)
-#define POPUPHIGHLIGHT_X 0
-#define POPUPHIGHLIGHT_Y 5
-#define POPUPHIGHLIGHT_Z 1
-#define POPUPHIGHLIGHT_YOFFSET ROWBOX_YOFFSET
-#define POPUPHIGHLIGHT_COLOR \
-    {                        \
-        255, 211, 0, 255     \
-    }
