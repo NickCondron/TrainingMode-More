@@ -526,6 +526,36 @@ EventDesc Ledgestall = {
     .matchData = 0,
 };
 
+static EventMatchData Slalom_MatchData = {
+    .timer = MATCH_TIMER_COUNTUP,
+    .matchType = MATCH_MATCHTYPE_TIME,
+    .hideGo = true,
+    .hideReady = false,
+    .isCreateHUD = false,
+    .timerRunOnPause = false,
+    .isCheckForZRetry = true,
+    .isShowScore = true,
+    .isRunStockLogic = false,
+    .isDisableHit = false,
+    .useKOCounter = false,
+    .timerSeconds = 0,
+};
+EventDesc Slalom = {
+    .eventName = "Slalom\n",
+    .eventDescription = "Dash dance through the poles to score!",
+    .eventFile = "slalom",
+    .jumpTableIndex = -1,
+    .CSSType = SLCHRKIND_EVENT,
+    .allowed_characters = { .hmn = -1, .cpu = -1 },
+    .cpuKind = -1,
+    .stage = -1,
+    .disable_hazards = true,
+    .force_sopo = true,
+    .scoreType = SCORETYPE_KO,
+    .callbackPriority = 15,
+    .matchData = &Slalom_MatchData,
+};
+
 ///////////////////////
 /// Page Defintions ///
 ///////////////////////
@@ -536,6 +566,7 @@ static EventDesc *Minigames_Events[] = {
     &Multishine,
     &Reaction,
     &Ledgestall,
+    &Slalom,
 };
 static EventPage Minigames_Page = {
     .name = "Minigames",
