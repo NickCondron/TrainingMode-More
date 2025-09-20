@@ -26,9 +26,8 @@ int sprintf(char *restrict str, const char *restrict format, ...);
 #define OSRoundDown32B(x) (((u32)(x)) & ~(32 - 1))
 #define OSRoundUp512B(x) (((u32)(x) + 512 - 1) & ~(512 - 1)) // using this for card reads
 #define OSRoundDown512B(x) (((u32)(x)) & ~(512 - 1))         // using this for card reads
-#define OSTicksToMilliseconds(ticks) ((ticks) / ((os_info->bus_clock / 4) / 1000))
-#define OSTicksToMicroseconds(ticks) ((ticks) / ((os_info->bus_clock / 4) / 1000000))
-#define MillisecondsSinceTick(ticks) ((float)OSTicksToMicroseconds(OSGetTick() - ticks) / 1000) // returns microseconds between tick given and the current tick
+#define OSTicksToUS(ticks) ((ticks) * 8 / (os_info->bus_clock / 4 / 125000))
+#define USSinceTick(ticks) (OSTicksToUS(OSGetTick() - (ticks))) // returns microseconds between tick given and the current tick
 #define BytesToKB(bytes) ((float)bytes / 1000.0)
 #define BytesToMB(bytes) ((float)bytes / 1000000.0)
 #define BitCheck(num, bit) !!((num) & (1 << (bit))) // returns 0 or 1
@@ -591,6 +590,8 @@ s32 CARDWriteAsync(CARDFileInfo *fileInfo, void *buf, s32 length, s32 offset, vo
 s32 CARDGetXferredBytes(s32 chan);
 u32 PADRead(PADStatus *status);
 u32 PADReset(u32 mask); // use PAD_CHANX_BIT
+void SIRegisterPollingHandler(void *callback);
+void SIUnregisterPollingHandler(void *callback);
 void SISetXY(u16 line, u8 cnt);
 void SISetSamplingRate(int msec);
 void SIEnablePolling(int mask);

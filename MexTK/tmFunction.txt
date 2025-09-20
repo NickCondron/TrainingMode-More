@@ -24,3 +24,8 @@ GetScoreType
 GetPageEventOffset
 GetJumpTableOffset
 GetEventCharList
+InitDebugInput
+LogEngineTime
+LogFetchTime
+LogPollTime
+LogScanoutTime

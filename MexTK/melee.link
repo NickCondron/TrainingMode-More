@@ -48,6 +48,8 @@
 803549A0:CARDGetXferredBytes
 8034DA00:PADRead
 8034D5E8:PADReset
+80349BF0:SIRegisterPollingHandler
+80349CBC:SIUnregisterPollingHandler
 8034A0F0:SISetXY
 8034DDAC:SISetSamplingRate
 8034A150:SIEnablePolling

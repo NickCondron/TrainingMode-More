@@ -146,37 +146,48 @@
     .set TM_FrozenToggle, -0x4F8C
     .set TM_GameFrameCounter, -0x49a8
 
-    # TM Function
-    .set TM_tmFunction, -(50*4)                         # offset of rtoc where function pointers are kept, probably temp solution
-    .set TM_EventPages, TM_tmFunction + 0x0
-    .set TM_GetEventDesc, TM_EventPages + 0x4
-    .set TM_GetEventName, TM_GetEventDesc + 0x4
-    .set TM_GetEventDescription, TM_GetEventName + 0x4
-    .set TM_GetPageName, TM_GetEventDescription + 0x4
-    .set TM_GetPageEventNum, TM_GetPageName + 0x4
-    .set TM_GetTMVersShort, TM_GetPageEventNum + 0x4
-    .set TM_GetTMVersLong, TM_GetTMVersShort + 0x4
-    .set TM_GetTMCompile, TM_GetTMVersLong + 0x4
-    .set TM_GetPageNum, TM_GetTMCompile + 0x4
-    .set TM_GetCSSType, TM_GetPageNum + 0x4
-    .set TM_GetIsSelectStage, TM_GetCSSType + 0x4
-    .set TM_GetCPUFighter, TM_GetIsSelectStage + 0x4
-    .set TM_GetStage, TM_GetCPUFighter + 0x4
-    .set TM_GetEventFile, TM_GetStage + 0x4
-    .set TM_GetCSSFile, TM_GetEventFile + 0x4
-    .set TM_EventInit, TM_GetCSSFile + 0x4
-    .set TM_OnSceneChange, TM_EventInit + 0x4
-    .set TM_OnBoot, TM_OnSceneChange + 0x4
-    .set TM_OnStartMelee, TM_OnBoot + 0x4
-    .set TM_OnFileLoad, TM_OnStartMelee + 0x4
-    .set TM_MessageDisplay, TM_OnFileLoad + 0x4
-    .set TM_GetScoreType, TM_MessageDisplay + 0x4
-    .set TM_GetPageEventOffset, TM_GetScoreType + 0x4
-    .set TM_GetJumpTableOffset, TM_GetPageEventOffset + 0x4
-    .set TM_GetEventCharList, TM_GetJumpTableOffset + 0x4
+    .macro TABLE table, base, entry_size=4
+        .set \table, \base
+        .set _current, \base
+        .macro ENTRY name
+            .set \name, _current
+            .set _current, _current + \entry_size
+        .endm
+    .endm
 
-    # TmDt Data Pointers
-    .set TM_Data, TM_tmFunction - 0x4
+    # TM Function
+    TABLE TM_tmFunction, -(50*4) # offset of rtoc where function pointers are kept, probably temp solution
+    ENTRY TM_EventPages
+    ENTRY TM_GetEventDesc
+    ENTRY TM_GetEventName
+    ENTRY TM_GetEventDescription
+    ENTRY TM_GetPageName
+    ENTRY TM_GetPageEventNum
+    ENTRY TM_GetTMVersShort
+    ENTRY TM_GetTMVersLong
+    ENTRY TM_GetTMCompile
+    ENTRY TM_GetPageNum
+    ENTRY TM_GetCSSType
+    ENTRY TM_GetIsSelectStage
+    ENTRY TM_GetCPUFighter
+    ENTRY TM_GetStage
+    ENTRY TM_GetEventFile
+    ENTRY TM_GetCSSFile
+    ENTRY TM_EventInit
+    ENTRY TM_OnSceneChange
+    ENTRY TM_OnBoot
+    ENTRY TM_OnStartMelee
+    ENTRY TM_OnFileLoad
+    ENTRY TM_MessageDisplay
+    ENTRY TM_GetScoreType
+    ENTRY TM_GetPageEventOffset
+    ENTRY TM_GetJumpTableOffset
+    ENTRY TM_GetEventCharList
+    ENTRY TM_InitDebugInput
+    ENTRY TM_LogEngineTime
+    ENTRY TM_LogFetchTime
+    ENTRY TM_LogPollTime
+    ENTRY TM_LogScanoutTime
 
     # Scene Struct
     .set SceneController, 0x80479D30
@@ -239,6 +250,8 @@
 
     .set ActionStateChange, 0x800693ac
     .set OSReport, 0x803456a8
+    .set OSDisableInterrupts, 0x80347364
+    .set OSRestoreInterrupts, 0x8034738c
     .set HSD_Randi, 0x80380580
     .set HSD_Randf, 0x80380528
     .set AS_Wait, 0x8008a2bc
