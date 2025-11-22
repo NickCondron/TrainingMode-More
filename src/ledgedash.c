@@ -200,10 +200,8 @@ void Event_Init(GOBJ *gobj)
     // Init hitlog
     event_data->hitlog_gobj = Ledgedash_HitLogInit();
 
-    // Init HUD
+    Ledgedash_EcbInit(event_data);
     Ledgedash_HUDInit(event_data);
-
-    // Init Fighter
     Ledgedash_FtInit(event_data);
 
     Fighter_PlaceOnLedge();
@@ -216,6 +214,7 @@ void Event_Think(GOBJ *event)
     // get fighter data
     GOBJ *hmn = Fighter_GetGObj(0);
     FighterData *hmn_data = hmn->userdata;
+    Coll_DrawEcbs(&hmn_data->coll_data);
 
     // no ledgefall
     FtCliffCatch *ft_state = (void *)&hmn_data->state_var;
@@ -474,6 +473,41 @@ void Ledgedash_HUDThink(LedgedashData *event_data, FighterData *hmn_data)
     }
 }
 
+void Ledgedash_EcbInit(LedgedashData *event_data)
+{
+    GOBJ *ecb_gobj = GObj_Create(0, 0, 0);
+    GObj_AddGXLink(ecb_gobj, Ledgedash_EcbGX, 3, 0);
+}
+
+void Ledgedash_EcbGX(GOBJ *gobj, int pass)
+{
+    GOBJ *hmn = Fighter_GetGObj(0);
+    FighterData *hmn_data = hmn->userdata;
+    CollData *cd = &hmn_data->coll_data;
+
+    u32 color = 0xFFA030FF;
+
+    PRIM_DrawMode draw_mode = {
+        .shape = PRIM_SHAPE_TRIANGLES,
+    };
+    PRIM_BlendMode blend_mode = {
+        .blend_type = PRIM_BLEND_BLEND,
+        .blend_src = PRIM_SOURCE_SRC_ALPHA,
+        .blend_dst = PRIM_SOURCE_SRC_INV_ALPHA,
+        .blend_logic = PRIM_LOGIC_NOOP,
+    };
+
+    // Draw bottom half of ecb
+    PRIM_NEW(3, draw_mode, blend_mode);
+    PRIM_DRAW(cd->topN_Curr.X + cd->ecbCurrCorrect_bot.X,
+            cd->topN_Curr.Y + cd->ecbCurrCorrect_bot.Y, 0, color);
+    PRIM_DRAW(cd->topN_Curr.X + cd->ecbCurrCorrect_left.X,
+            cd->topN_Curr.Y + cd->ecbCurrCorrect_left.Y, 0, color);
+    PRIM_DRAW(cd->topN_Curr.X + cd->ecbCurrCorrect_right.X,
+            cd->topN_Curr.Y + cd->ecbCurrCorrect_right.Y, 0, color);
+    PRIM_CLOSE();
+}
+
 void Ledgedash_ResetThink(LedgedashData *event_data, GOBJ *hmn)
 {
     FighterData *hmn_data = hmn->userdata;
@@ -655,6 +689,7 @@ void Ledgedash_HitLogGX(GOBJ *gobj, int pass)
     static GXColor detect_diffuse = {255, 255, 255, 50};
 
     LdshHitlogData *hitlog_data = gobj->userdata;
+
     
     if (pass == 2) {
         LedgedashData *event_data = event_vars->event_gobj->userdata;

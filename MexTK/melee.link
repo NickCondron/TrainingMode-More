@@ -1000,6 +1000,8 @@
 801C96F8:Stage_SpawnEffectPos
 801C2FE0:Stage_UpdateMovingColl
 80224E64:Stage_GetSpawnPosition
+80058B5C:Coll_DrawEcbs
+800590F4:Coll_DrawSnapping
 80325878:strchr
 803258E8:strcmp
 80325A50:strcpy

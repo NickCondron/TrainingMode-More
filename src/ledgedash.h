@@ -33,6 +33,11 @@ struct LedgedashData
     } hud;
     struct
     {
+        Vec3 lock;
+        Vec3 curr;
+    } ecb;
+    struct
+    {
         int timer;
         u8 is_ledgegrab : 1;
         u8 is_release : 1;
@@ -98,6 +103,8 @@ void Ledgedash_InitVariables(LedgedashData *event_data);
 void Ledgedash_ResetThink(LedgedashData *event_data, GOBJ *hmn);
 void Ledgedash_HUDThink(LedgedashData *event_data, FighterData *hmn_data);
 void Ledgedash_HUDInit(LedgedashData *event_data);
+void Ledgedash_EcbInit(LedgedashData *event_data);
+void Ledgedash_EcbGX(GOBJ *gobj, int pass);
 void RebirthWait_Phys(GOBJ *fighter);
 int RebirthWait_IASA(GOBJ *fighter);
 int Ledge_Find(int search_dir, float xpos_start, float *ledge_dir);

@@ -137,7 +137,7 @@ static struct sideb {
 static int reset_timer = 0;
 static int state = STATE_ENDLAG;
 
-void Draw_Lines() {
+void Draw_Lines(void) {
     GOBJ *hmn = Fighter_GetGObj(0);
     FighterData *hmn_data = hmn->userdata;
     CollData *coll_data = &hmn_data->coll_data;
